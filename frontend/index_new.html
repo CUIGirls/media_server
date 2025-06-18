@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P2P Movie Streaming Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .search-container {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .search-box {
+      display: flex;
+      gap: 10px;
+    }
+    
+    #searchInput {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+    
+    #searchBtn {
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    
+    .status-panel {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    
+    .status-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .status-label {
+      font-weight: bold;
+      color: #667eea;
+      font-size: 14px;
+    }
+    
+    .status-value {
+      margin-top: 5px;
+      font-size: 16px;
+    }
+    
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+    
+    .movie-card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    
+    .movie-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .movie-card img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
+    
+    .movie-info {
+      padding: 20px;
+    }
+    
+    .movie-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .movie-year {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .movie-summary {
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 15px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .download-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    
+    .download-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .download-panel {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 20px 0 10px 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .progress-text {
+      text-align: center;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+    
+    .chunk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+      gap: 5px;
+      margin: 15px 0;
+    }
+    
+    .chunk-item {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .chunk-missing { background: #dc3545; }
+    .chunk-downloading { background: #ffc107; }
+    .chunk-complete { background: #28a745; }
+    
+    .peer-item {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      margin: 5px 0;
+      border-radius: 8px;
+      border-left: 4px solid #28a745;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .video-player {
+      margin-top: 20px;
+      text-align: center;
+    }
+    
+    .video-player video {
+      max-width: 100%;
+      border-radius: 15px;
+    }
+    
+    .logs {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+    }
+    
+    .log-info { color: #63b3ed; }
+    .log-success { color: #68d391; }
+    .log-warning { color: #fbd38d; }
+    .log-error { color: #feb2b2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 P2P Movie Streaming Platform</h1>
+    
+    <div class="search-container">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search for movies..." />
+        <button id="searchBtn">Search</button>
+      </div>
+    </div>
+    
+    <div class="status-panel">
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">Connection Status</div>
+          <div class="status-value" id="connectionStatus">Disconnected</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Peer ID</div>
+          <div class="status-value" id="peerId">Not Connected</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Active Peers</div>
+          <div class="status-value" id="activePeers">0</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Current Download</div>
+          <div class="status-value" id="currentDownload">None</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="movies" class="movies-grid">
+      <div style="grid-column: 1/-1; text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem;">
+        Search for movies to see results here...
+      </div>
+    </div>
+    
+    <div id="downloadPanel" class="download-panel">
+      <h3>Download Progress</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">0%</div>
+      
+      <div id="chunkVisualization">
+        <h4>Chunk Status</h4>
+        <div class="chunk-grid" id="chunkGrid"></div>
+      </div>
+      
+      <div id="peerConnections">
+        <h4>Connected Peers</h4>
+        <div class="peer-list" id="peerList"></div>
+      </div>
+      
+      <div id="videoPlayer" class="video-player"></div>
+    </div>
+    
+    <div class="logs" id="logs"></div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+  <script>
+    // Global application state
+    const APP = {
+      socket: null,
+      localId: null,
+      webTorrentClient: null,
+      p2p: {
+        connections: new Map(),
+        dataChannels: new Map(),
+        receivedChunks: new Map(),
+        missingChunks: new Set(),
+        downloadingChunks: new Set(),
+        currentMovie: null,
+        totalChunks: 0,
+        chunkMap: {},
+        assemblingChunks: new Map() // For multi-part chunk assembly
+      },
+      downloadActive: false,
+      downloadInterval: null
+    };
+
+    // Initialize WebTorrent
+    APP.webTorrentClient = new WebTorrent();
+    
+    // Logging system
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry log-${type}`;
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      
+      const logsContainer = document.getElementById('logs');
+      logsContainer.appendChild(logEntry);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+      
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    // Update UI status
+    function updateStatus() {
+      document.getElementById('connectionStatus').textContent = 
+        APP.socket?.connected ? 'Connected' : 'Disconnected';
+      document.getElementById('peerId').textContent = 
+        APP.localId || 'Not Connected';
+      document.getElementById('activePeers').textContent = 
+        APP.p2p.connections.size;
+      document.getElementById('currentDownload').textContent = 
+        APP.p2p.currentMovie || 'None';
+    }
+
+    // Initialize socket connection
+    function initializeSocket() {
+      APP.socket = io("http://localhost:8080");
+      
+      APP.socket.on('connect', () => {
+        APP.localId = APP.socket.id;
+        log('Connected to signaling server', 'success');
+        updateStatus();
+      });
+      
+      APP.socket.on('disconnect', () => {
+        log('Disconnected from signaling server', 'warning');
+        cleanup();
+        updateStatus();
+      });
+      
+      APP.socket.on('signal', handleSignal);
+      APP.socket.on('peersFound', handlePeersFound);
+    }
+
+    // Handle WebRTC signaling
+    async function handleSignal(data) {
+      const { from, signal } = data;
+      
+      if (from === APP.localId) return;
+      
+      log(`Received signal from ${from}: ${signal.type || 'ice-candidate'}`);
+      
+      if (!APP.p2p.connections.has(from)) {
+        await createPeerConnection(from);
+      }
+      
+      const pc = APP.p2p.connections.get(from);
+      
+      try {
+        if (signal.type === 'offer') {
+          await pc.setRemoteDescription(signal);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          APP.socket.emit('signal', { 
+            to: from, 
+            from: APP.localId, 
+            signal: answer 
+          });
+          log(`Sent answer to ${from}`, 'success');
+        } else if (signal.type === 'answer') {
+          await pc.setRemoteDescription(signal);
+          log(`Set remote description for ${from}`, 'success');
+        } else if (signal.candidate) {
+          await pc.addIceCandidate(signal);
+        }
+      } catch (err) {
+        log(`Error handling signal from ${from}: ${err.message}`, 'error');
+      }
+    }
+
+    // Create peer connection
+    async function createPeerConnection(peerId) {
+      log(`Creating peer connection with ${peerId}`);
+      
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      });
+      
+      APP.p2p.connections.set(peerId, pc);
+      
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          APP.socket.emit('signal', {
+            to: peerId,
+            from: APP.localId,
+            signal: event.candidate
+          });
+        }
+      };
+      
+      pc.onconnectionstatechange = () => {
+        log(`Connection state with ${peerId}: ${pc.connectionState}`);
+        updateStatus();
+        updatePeerList();
+        
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          APP.p2p.connections.delete(peerId);
+          APP.p2p.dataChannels.delete(peerId);
+          updatePeerList();
+        }
+      };
+      
+      pc.ondatachannel = (event) => {
+        const channel = event.channel;
+        APP.p2p.dataChannels.set(peerId, channel);
+        setupDataChannel(channel, peerId);
+        log(`Received data channel from ${peerId}`, 'success');
+      };
+      
+      return pc;
+    }
+
+    // Setup data channel with better error handling
+    function setupDataChannel(channel, peerId) {
+      channel.binaryType = 'arraybuffer';
+      
+      channel.onopen = () => {
+        log(`Data channel with ${peerId} opened`, 'success');
+        updatePeerList();
+        requestMissingChunks();
+      };
+      
+      channel.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          handleP2PMessage(message, peerId);
+        } catch (err) {
+          log(`Error parsing message from ${peerId}: ${err.message}`, 'error');
+        }
+      };
+      
+      channel.onclose = () => {
+        log(`Data channel with ${peerId} closed`, 'warning');
+        updatePeerList();
+      };
+      
+      channel.onerror = (err) => {
+        log(`Data channel error with ${peerId}`, 'error');
+        // Attempt to reconnect
+        setTimeout(() => {
+          if (APP.p2p.connections.has(peerId)) {
+            log(`Attempting to reconnect to ${peerId}`, 'info');
+            const pc = APP.p2p.connections.get(peerId);
+            if (pc.connectionState !== 'connected') {
+              APP.p2p.connections.delete(peerId);
+              APP.p2p.dataChannels.delete(peerId);
+            }
+          }
+        }, 5000);
+      };
+    }
+
+    // Handle P2P messages with improved chunk assembly
+    function handleP2PMessage(message, peerId) {
+      if (message.type === 'chunkRequest') {
+        handleChunkRequest(message, peerId);
+      } else if (message.type === 'chunkStart') {
+        handleChunkStart(message, peerId);
+      } else if (message.type === 'chunkPiece') {
+        handleChunkPiece(message, peerId);
+      } else if (message.type === 'chunkComplete') {
+        handleChunkComplete(message, peerId);
+      }
+    }
+
+    // Handle chunk request
+    function handleChunkRequest(message, peerId) {
+      const { movie, chunkIndex } = message;
+      log(`Peer ${peerId} requested chunk ${chunkIndex} of ${movie}`);
+      
+      const movieChunks = APP.p2p.receivedChunks.get(movie);
+      if (movieChunks && movieChunks.has(chunkIndex)) {
+        const chunkData = movieChunks.get(chunkIndex);
+        const channel = APP.p2p.dataChannels.get(peerId);
+        
+        if (channel && channel.readyState === 'open') {
+          try {
+            // Send chunk in smaller pieces to avoid size limits
+            const pieceSize = 8192; // 8KB pieces
+            const totalPieces = Math.ceil(chunkData.length / pieceSize);
+            
+            // Send start signal
+            channel.send(JSON.stringify({
+              type: 'chunkStart',
+              movie,
+              chunkIndex,
+              totalPieces,
+              totalSize: chunkData.length
+            }));
+            
+            // Send pieces
+            for (let i = 0; i < totalPieces; i++) {
+              const start = i * pieceSize;
+              const end = Math.min(start + pieceSize, chunkData.length);
+              const piece = chunkData.slice(start, end);
+              
+              channel.send(JSON.stringify({
+                type: 'chunkPiece',
+                movie,
+                chunkIndex,
+                pieceIndex: i,
+                data: Array.from(piece)
+              }));
+            }
+            
+            // Send completion
+            channel.send(JSON.stringify({
+              type: 'chunkComplete',
+              movie,
+              chunkIndex
+            }));
+            
+            log(`Sent chunk ${chunkIndex} to ${peerId}`, 'success');
+          } catch (err) {
+            log(`Error sending chunk: ${err.message}`, 'error');
+          }
+        }
+      } else {
+        log(`Cannot fulfill chunk ${chunkIndex} request`, 'warning');
+      }
+    }
+
+    // Handle chunk assembly
+    function handleChunkStart(message, peerId) {
+      const { movie, chunkIndex, totalPieces, totalSize } = message;
+      const key = `${movie}_${chunkIndex}`;
+      
+      APP.p2p.assemblingChunks.set(key, {
+        pieces: new Array(totalPieces),
+        receivedPieces: 0,
+        totalPieces,
+        totalSize,
+        peerId
+      });
+      
+      log(`Starting to receive chunk ${chunkIndex} from ${peerId} (${totalPieces} pieces)`);
+    }
+
+    function handleChunkPiece(message, peerId) {
+      const { movie, chunkIndex, pieceIndex, data } = message;
+      const key = `${movie}_${chunkIndex}`;
+      const assembly = APP.p2p.assemblingChunks.get(key);
+      
+      if (assembly) {
+        assembly.pieces[pieceIndex] = new Uint8Array(data);
+        assembly.receivedPieces++;
+      }
+    }
+
+    function handleChunkComplete(message, peerId) {
+      const { movie, chunkIndex } = message;
+      const key = `${movie}_${chunkIndex}`;
+      const assembly = APP.p2p.assemblingChunks.get(key);
+      
+      if (assembly && assembly.receivedPieces === assembly.totalPieces) {
+        // Reassemble chunk
+        const chunkData = new Uint8Array(assembly.totalSize);
+        let offset = 0;
+        
+        for (const piece of assembly.pieces) {
+          chunkData.set(piece, offset);
+          offset += piece.length;
+        }
+        
+        // Store the chunk
+        if (!APP.p2p.receivedChunks.has(movie)) {
+          APP.p2p.receivedChunks.set(movie, new Map());
+        }
+        
+        APP.p2p.receivedChunks.get(movie).set(chunkIndex, chunkData);
+        APP.p2p.missingChunks.delete(key);
+        APP.p2p.downloadingChunks.delete(key);
+        APP.p2p.assemblingChunks.delete(key);
+        
+        // Register with tracker
+        APP.socket.emit('registerChunk', { movie, chunkIndex });
+        
+        log(`Received complete chunk ${chunkIndex} from ${peerId}`, 'success');
+        
+        updateProgress();
+        updateChunkVisualization();
+        
+        if (APP.p2p.missingChunks.size === 0) {
+          completeDownload(movie);
+        }
+      }
+    }
+
+    // Request missing chunks with P2P and WebTorrent fallback
+    async function requestMissingChunks() {
+      if (!APP.p2p.currentMovie || APP.p2p.missingChunks.size === 0) return;
+      
+      const movie = APP.p2p.currentMovie;
+      
+      for (const chunkKey of APP.p2p.missingChunks) {
+        if (APP.p2p.downloadingChunks.has(chunkKey)) continue;
+        
+        const chunkIndex = parseInt(chunkKey.split('_')[1]);
+        APP.p2p.downloadingChunks.add(chunkKey);
+        
+        // Try P2P first
+        const peersWithChunk = APP.p2p.chunkMap[chunkIndex] || [];
+        let chunkRequested = false;
+        
+        for (const peerId of peersWithChunk) {
+          if (peerId === APP.localId) continue;
+          
+          const channel = APP.p2p.dataChannels.get(peerId);
+          if (channel && channel.readyState === 'open') {
+            channel.send(JSON.stringify({
+              type: 'chunkRequest',
+              movie,
+              chunkIndex
+            }));
+            log(`Requested chunk ${chunkIndex} from peer ${peerId}`);
+            chunkRequested = true;
+            break;
+          }
+        }
+        
+        // Fallback to server if no P2P
+        if (!chunkRequested) {
+          try {
+            const response = await fetch(
+              `http://localhost:8080/download_chunk?movie=${encodeURIComponent(movie)}&chunkIndex=${chunkIndex}`
+            );
+            
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer();
+              const chunkData = new Uint8Array(arrayBuffer);
+              
+              if (!APP.p2p.receivedChunks.has(movie)) {
+                APP.p2p.receivedChunks.set(movie, new Map());
+              }
+              
+              APP.p2p.receivedChunks.get(movie).set(chunkIndex, chunkData);
+              APP.p2p.missingChunks.delete(chunkKey);
+              APP.p2p.downloadingChunks.delete(chunkKey);
+              
+              APP.socket.emit('registerChunk', { movie, chunkIndex });
+              log(`Downloaded chunk ${chunkIndex} from server`, 'success');
+              
+              updateProgress();
+              updateChunkVisualization();
+              
+              if (APP.p2p.missingChunks.size === 0) {
+                completeDownload(movie);
+              }
+            }
+          } catch (err) {
+            log(`Failed to download chunk ${chunkIndex}: ${err.message}`, 'error');
+            APP.p2p.downloadingChunks.delete(chunkKey);
+          }
+        }
+      }
+    }
+
+    // WebTorrent fallback for complete movie download
+    function startWebTorrentFallback(movie) {
+      // Get the magnet link from the movie data
+      const magnetLink = movie.magnetLink || movie.magnet_link;
+      
+      if (!magnetLink) {
+        log('No magnet link available for WebTorrent fallback', 'warning');
+        return;
+      }
+      
+      log('Starting WebTorrent fallback download', 'info');
+      
+      APP.webTorrentClient.add(magnetLink, (torrent) => {
+        log(`WebTorrent: Added torrent ${torrent.name}`, 'success');
+        
+        torrent.on('download', () => {
+          const progress = (torrent.progress * 100).toFixed(1);
+          log(`WebTorrent: ${progress}% complete`, 'info');
+          
+          // Update UI progress
+          document.getElementById('progressFill').style.width = `${progress}%`;
+          document.getElementById('progressText').textContent = `WebTorrent: ${progress}%`;
+        });
+        
+        torrent.on('done', () => {
+          log('WebTorrent download complete!', 'success');
+          
+          // Find video files and display them
+          torrent.files.forEach(file => {
+            if (file.name.endsWith('.mp4') || file.name.endsWith('.mkv') || file.name.endsWith('.avi')) {
+              file.appendTo('#videoPlayer', (err, elem) => {
+                if (!err) {
+                  log(`Playing ${file.name} via WebTorrent`, 'success');
+                }
+              });
+            }
+          });
+        });
+        
+        torrent.on('error', (err) => {
+          log(`WebTorrent error: ${err.message}`, 'error');
+        });
+      });
+    }
+
+    // Update progress display
+    function updateProgress() {
+      if (!APP.p2p.currentMovie || APP.p2p.totalChunks === 0) return;
+      
+      const movieChunks = APP.p2p.receivedChunks.get(APP.p2p.currentMovie);
+      const received = movieChunks ? movieChunks.size : 0;
+      const progress = (received / APP.p2p.totalChunks) * 100;
+      
+      document.getElementById('progressFill').style.width = `${progress}%`;
+      document.getElementById('progressText').textContent = 
+        `${progress.toFixed(1)}% (${received}/${APP.p2p.totalChunks} chunks)`;
+    }
+
+    // Update chunk visualization
+    function updateChunkVisualization() {
+      if (!APP.p2p.currentMovie) return;
+      
+      const chunkGrid = document.getElementById('chunkGrid');
+      chunkGrid.innerHTML = '';
+      
+      const movieChunks = APP.p2p.receivedChunks.get(APP.p2p.currentMovie);
+      
+      for (let i = 0; i < APP.p2p.totalChunks; i++) {
+        const chunkDiv = document.createElement('div');
+        chunkDiv.className = 'chunk-item';
+        chunkDiv.textContent = i;
+        
+        const chunkKey = `${APP.p2p.currentMovie}_${i}`;
+        
+        if (movieChunks && movieChunks.has(i)) {
+          chunkDiv.classList.add('chunk-complete');
+        } else if (APP.p2p.downloadingChunks.has(chunkKey)) {
+          chunkDiv.classList.add('chunk-downloading');
+        } else {
+          chunkDiv.classList.add('chunk-missing');
+        }
+        
+        chunkGrid.appendChild(chunkDiv);
+      }
+    }
+
+    // Update peer list
+    function updatePeerList() {
+      const peerList = document.getElementById('peerList');
+      peerList.innerHTML = '';
+      
+      for (const [peerId, channel] of APP.p2p.dataChannels) {
+        const peerDiv = document.createElement('div');
+        peerDiv.className = 'peer-item';
+        
+        const status = channel.readyState;
+        const statusColor = status === 'open' ? '#28a745' : '#dc3545';
+        
+        peerDiv.innerHTML = `
+          <span>Peer: ${peerId.substring(0, 8)}...</span>
+          <span style="color: ${statusColor}">${status}</span>
+        `;
+        
+        peerList.appendChild(peerDiv);
+      }
+    }
+
+    // Complete download and assemble file
+    function completeDownload(movie) {
+      log(`P2P download complete for ${movie}!`, 'success');
+      clearInterval(APP.downloadInterval);
+      APP.downloadActive = false;
+      
+      const movieChunks = APP.p2p.receivedChunks.get(movie);
+      const chunks = [];
+      
+      for (let i = 0; i < APP.p2p.totalChunks; i++) {
+        chunks.push(movieChunks.get(i));
+      }
+      
+      // Create blob and video element
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      
+      const videoPlayer = document.getElementById('videoPlayer');
+      videoPlayer.innerHTML = `
+        <h4>P2P Download Complete!</h4>
+        <video controls style="max-width: 100%; border-radius: 10px;">
+          <source src="${url}" type="video/mp4">
+        </video>
+        <br><br>
+        <a href="${url}" download="${movie}.mp4" style="
+          display: inline-block;
+          padding: 10px 20px;
+          background: #007bff;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+        ">Download File</a>
+      `;
+      
+      updateStatus();
+    }
+
+    // Handle peers found
+    async function handlePeersFound(data) {
+      const { movie, peers, chunkMap } = data;
+      log(`Found ${peers.length} peers for ${movie}`);
+      
+      APP.p2p.chunkMap = chunkMap;
+      
+      // Connect to each peer
+      for (const peerId of peers) {
+        if (peerId === APP.localId || APP.p2p.connections.has(peerId)) continue;
+        
+        try {
+          const pc = await createPeerConnection(peerId);
+          const channel = pc.createDataChannel('chunks');
+          APP.p2p.dataChannels.set(peerId, channel);
+          setupDataChannel(channel, peerId);
+          
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          
+          APP.socket.emit('signal', {
+            to: peerId,
+            from: APP.localId,
+            signal: offer
+          });
+          
+          log(`Sent offer to ${peerId}`, 'info');
+        } catch (err) {
+          log(`Failed to connect to ${peerId}: ${err.message}`, 'error');
+        }
+      }
+    }
+
+    // Start movie download with hybrid P2P + WebTorrent strategy
+    async function downloadMovie(movie) {
+      if (APP.downloadActive) {
+        log('Download already in progress', 'warning');
+        return;
+      }
+      
+      log(`Starting hybrid download for: ${movie.title}`, 'info');
+      APP.downloadActive = true;
+      APP.p2p.currentMovie = movie.title;
+      APP.p2p.totalChunks = 10; // Can be made dynamic based on movie size
+      
+      // Store movie data for WebTorrent fallback
+      APP.currentMovieData = movie;
+      
+      // Initialize missing chunks
+      APP.p2p.missingChunks.clear();
+      APP.p2p.downloadingChunks.clear();
+      for (let i = 0; i < APP.p2p.totalChunks; i++) {
+        APP.p2p.missingChunks.add(`${movie.title}_${i}`);
+      }
+      
+      // Show download panel
+      document.getElementById('downloadPanel').style.display = 'block';
+      updateChunkVisualization();
+      updateProgress();
+      updateStatus();
+      
+      // Find peers for P2P
+      APP.socket.emit('findPeers', { movie: movie.title });
+      
+      // Start periodic chunk requests
+      APP.downloadInterval = setInterval(requestMissingChunks, 2000);
+      
+      // Also start immediate request
+      setTimeout(requestMissingChunks, 1000);
+      
+      // Set timeout for WebTorrent fallback if P2P is slow
+      setTimeout(() => {
+        if (APP.p2p.missingChunks.size > APP.p2p.totalChunks * 0.5) {
+          log('P2P is slow, starting WebTorrent fallback', 'warning');
+          startWebTorrentFallback(movie);
+        }
+      }, 30000); // 30 seconds timeout
+    }
+
+    // Search for movies
+    async function searchMovies(query) {
+      log(`Searching for: ${query}`, 'info');
+      
+      try {
+        const response = await fetch(`http://localhost:8080/search?query=${encodeURIComponent(query)}`);
+        const movies = await response.json();
+        
+        displayMovies(movies);
+        log(`Found ${movies.length} movies`, 'success');
+      } catch (err) {
+        log(`Search failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Display movies
+    function displayMovies(movies) {
+      const container = document.getElementById('movies');
+      container.innerHTML = '';
+      
+      if (!movies || movies.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem;">
+            No movies found 😔
+          </div>
+        `;
+        return;
+      }
+      
+      movies.forEach(movie => {
+        const movieCard = document.createElement('div');
+        movieCard.className = 'movie-card';
+        
+        // Extract magnet link properly
+        let magnetLink = null;
+        if (movie.torrents && movie.torrents.length > 0) {
+          const torrent = movie.torrents.find(t => t.quality === '1080p') || 
+                         movie.torrents.find(t => t.quality === '720p') || 
+                         movie.torrents[0];
+          magnetLink = torrent.url;
+        }
+        
+        movieCard.innerHTML = `
+          <img src="${movie.medium_cover_image}" alt="${movie.title}" />
+          <div class="movie-info">
+            <div class="movie-title">${movie.title}</div>
+            <div class="movie-year">${movie.year}</div>
+            <div class="movie-summary">${movie.summary || 'No description available.'}</div>
+            <button class="download-btn" onclick="downloadMovie({
+              title: '${movie.title.replace(/'/g, '\\'')}',
+              year: ${movie.year},
+              magnetLink: '${magnetLink || ''}',
+              image: '${movie.medium_cover_image}',
+              summary: '${(movie.summary || '').replace(/'/g, '\\'')}'
+            })">
+              🚀 Download via P2P
+            </button>
+            ${magnetLink ? `<button class="download-btn" onclick="startWebTorrentFallback({
+              title: '${movie.title.replace(/'/g, '\\'')}',
+              magnetLink: '${magnetLink}'
+            })" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+              🌊 WebTorrent Only
+            </button>` : ''}
+          </div>
+        `;
+        
+        container.appendChild(movieCard);
+      });
+    }
+
+    // Cleanup function
+    function cleanup() {
+      APP.localId = null;
+      APP.downloadActive = false;
+      clearInterval(APP.downloadInterval);
+      
+      for (const pc of APP.p2p.connections.values()) {
+        pc.close();
+      }
+      
+      APP.p2p.connections.clear();
+      APP.p2p.dataChannels.clear();
+      APP.p2p.missingChunks.clear();
+      APP.p2p.downloadingChunks.clear();
+      APP.p2p.assemblingChunks.clear();
+      APP.p2p.currentMovie = null;
+      APP.p2p.totalChunks = 0;
+    }
+
+    // Event listeners
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      const query = document.getElementById('searchInput').value.trim();
+      if (query) {
+        searchMovies(query);
+      }
+    });
+    
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const query = e.target.value.trim();
+        if (query) {
+          searchMovies(query);
+        }
+      }
+    });
+
+    // Initialize app
+    initializeSocket();
+    updateStatus();
+    log('P2P Movie Streaming Platform initialized', 'success');
+  </script>
+</body>
+</html>

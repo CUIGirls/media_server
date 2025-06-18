@@ -1,0 +1,5 @@
+implement tracker that tracks the chunks being downloaded.
+multiple users are supposed to share the specified chunk that is being requested -> create a req handler that requsts a chunk from a movie from a user who has it.
+
+
+our webpage triggers the yts api, the user requests a movie, the req handler is called, the peers will offer chunks, the user will download and merge.
