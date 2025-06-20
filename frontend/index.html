@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advanced P2P Movie Streaming Platform</title>
+  <title>Optimized P2P Movie Streaming Platform</title>
   <style>
     * {
       margin: 0;
@@ -157,10 +157,6 @@
       margin-bottom: 10px;
     }
     
-    .torrent-btn {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-    }
-    
     .download-btn:disabled {
       background: #ccc;
       cursor: not-allowed;
@@ -199,108 +195,46 @@
       margin-bottom: 20px;
     }
     
+    .chunk-visualization {
+      margin: 20px 0;
+    }
+    
     .chunk-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-      gap: 8px;
-      margin: 15px 0;
+      grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+      gap: 2px;
+      max-width: 100%;
     }
     
     .chunk-item {
-      width: 60px;
-      height: 60px;
-      border-radius: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 2px;
+      font-size: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
       color: white;
-      position: relative;
-      overflow: hidden;
+      font-weight: bold;
     }
     
-    .chunk-missing { 
-      background: #dc3545; 
-    }
+    .chunk-missing { background: #dc3545; }
+    .chunk-downloading { background: #ffc107; }
+    .chunk-p2p { background: #007bff; }
+    .chunk-server { background: #28a745; }
     
-    .chunk-downloading { 
-      background: #ffc107; 
-      animation: pulse 2s infinite;
-    }
-    
-    .chunk-complete { 
-      background: #28a745; 
-    }
-    
-    .chunk-p2p {
-      background: #17a2b8;
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+    .peer-list {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
     }
     
     .peer-item {
-      background: #f8f9fa;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-      border-left: 4px solid #28a745;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-    }
-    
-    .peer-info {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .peer-id {
-      font-weight: bold;
-      font-size: 14px;
-    }
-    
-    .peer-stats {
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
-    }
-    
-    .peer-status {
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    
-    .status-connected {
-      background: #d4edda;
-      color: #155724;
-    }
-    
-    .status-connecting {
-      background: #fff3cd;
-      color: #856404;
-    }
-    
-    .status-failed {
-      background: #f8d7da;
-      color: #721c24;
-    }
-    
-    .video-player {
-      margin-top: 20px;
-      text-align: center;
-    }
-    
-    .video-player video {
-      max-width: 100%;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      padding: 5px 0;
+      border-bottom: 1px solid #e9ecef;
     }
     
     .logs {
@@ -308,7 +242,7 @@
       color: #e2e8f0;
       padding: 20px;
       border-radius: 15px;
-      max-height: 250px;
+      max-height: 300px;
       overflow-y: auto;
       font-family: 'Courier New', monospace;
       font-size: 12px;
@@ -324,37 +258,12 @@
     .log-success { color: #68d391; }
     .log-warning { color: #fbd38d; }
     .log-error { color: #feb2b2; }
-    
-    .network-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
-    }
-    
-    .stat-card {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-size: 24px;
-      font-weight: bold;
-      color: #667eea;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
-    }
+    .log-p2p { color: #a78bfa; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🚀 Advanced P2P Movie Streaming Platform</h1>
+    <h1>🚀 Optimized P2P Movie Streaming Platform</h1>
     
     <div class="search-container">
       <div class="search-box">
@@ -362,8 +271,7 @@
         <button id="searchBtn">🔍 Search</button>
       </div>
     </div>
-    
-    <div class="status-panel">
+      <div class="status-panel">
       <div class="status-grid">
         <div class="status-item">
           <div class="status-label">Connection Status</div>
@@ -378,24 +286,82 @@
           <div class="status-value" id="activePeers">0</div>
         </div>
         <div class="status-item">
-          <div class="status-label">Current Download</div>
-          <div class="status-value" id="currentDownload">None</div>
+          <div class="status-label">P2P Efficiency</div>
+          <div class="status-value" id="p2pEfficiency">0%</div>
         </div>
         <div class="status-item">
           <div class="status-label">Download Speed</div>
           <div class="status-value" id="downloadSpeed">0 KB/s</div>
         </div>
         <div class="status-item">
-          <div class="status-label">Total Downloaded</div>
-          <div class="status-value" id="totalDownloaded">0 MB</div>
+          <div class="status-label">Download Progress</div>
+          <div class="status-value" id="downloadProgress">0%</div>
         </div>
         <div class="status-item">
-          <div class="status-label">P2P Efficiency</div>
-          <div class="status-value" id="p2pEfficiency">0%</div>
+          <div class="status-label">CPU Utilization</div>
+          <div class="status-value" id="cpuUtilization">0%</div>
         </div>
         <div class="status-item">
-          <div class="status-label">Network Quality</div>
-          <div class="status-value" id="networkQuality">Unknown</div>
+          <div class="status-label">Parallel Workers</div>
+          <div class="status-value" id="activeWorkers">0/0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parallel Streaming Control Panel -->
+    <div class="status-panel" id="parallelStreamingPanel" style="display: none;">
+      <h3 style="color: #667eea; margin-bottom: 15px;">🚀 Parallel Streaming Engine</h3>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">Streaming Status</div>
+          <div class="status-value" id="streamingStatus">Idle</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Chunks Processed</div>
+          <div class="status-value" id="chunksProcessed">0/0</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Buffer Health</div>
+          <div class="status-value" id="bufferHealth">0%</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Processing Speed</div>
+          <div class="status-value" id="processingSpeed">0 chunks/s</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="enableParallelBtn" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+          🚀 Enable Parallel Streaming
+        </button>
+        <button id="viewStatsBtn" style="padding: 10px 20px; background: #764ba2; color: white; border: none; border-radius: 8px; cursor: pointer;">
+          📊 View Detailed Stats
+        </button>
+        <button id="optimizeBtn" style="padding: 10px 20px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer;">
+          ⚡ Auto-Optimize
+        </button>
+      </div>
+      
+      <!-- Real-time Performance Metrics -->
+      <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+        <h4 style="color: #667eea; margin-bottom: 10px;">⚡ Real-time Performance</h4>
+        <div id="performanceMetrics" class="status-grid">
+          <div class="status-item">
+            <div class="status-label">Bandwidth Usage</div>
+            <div class="status-value" id="bandwidthUsage">0 Mbps</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">Cache Hit Rate</div>
+            <div class="status-value" id="cacheHitRate">0%</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">Queue Length</div>
+            <div class="status-value" id="queueLength">0</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">Avg Response Time</div>
+            <div class="status-value" id="avgResponseTime">0ms</div>
+          </div>
         </div>
       </div>
     </div>
@@ -407,230 +373,123 @@
     </div>
     
     <div id="downloadPanel" class="download-panel">
-      <h3>📊 Download Progress & Network Analytics</h3>
-      
-      <div class="network-stats">
-        <div class="stat-card">
-          <div class="stat-value" id="chunksTotal">0</div>
-          <div class="stat-label">Total Chunks</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="chunksP2P">0</div>
-          <div class="stat-label">P2P Chunks</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="chunksServer">0</div>
-          <div class="stat-label">Server Chunks</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="avgSpeed">0</div>
-          <div class="stat-label">Avg Speed (KB/s)</div>
-        </div>
-      </div>
-      
+      <h3>📊 Download Progress</h3>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
       </div>
       <div class="progress-text" id="progressText">0%</div>
       
-      <div id="chunkVisualization">
-        <h4>🧩 Chunk Status Visualization</h4>
-        <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-          🔴 Missing | 🟡 Downloading | 🟢 Server | 🔵 P2P
+      <div class="chunk-visualization">
+        <h4>🧩 Chunk Status</h4>
+        <div style="font-size: 12px; margin-bottom: 10px;">
+          🔴 Missing | 🟡 Downloading | 🔵 P2P | 🟢 Server
         </div>
         <div class="chunk-grid" id="chunkGrid"></div>
       </div>
       
-      <div id="peerConnections">
+      <div class="peer-list">
         <h4>🌐 Connected Peers</h4>
-        <div class="peer-list" id="peerList"></div>
+        <div id="peerList">No peers connected</div>
       </div>
       
-      <div id="videoPlayer" class="video-player"></div>
+      <div id="videoPlayer"></div>
     </div>
     
     <div class="logs" id="logs"></div>
   </div>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
   <script>
-    // Enhanced Global Application State
+    const SERVER_URL = 'http://localhost:8080';    // Enhanced Application state with better management
     const APP = {
       socket: null,
       localId: null,
-      webTorrentClient: null,
-      p2p: {
-        connections: new Map(),
-        dataChannels: new Map(),
-        receivedChunks: new Map(),
-        missingChunks: new Set(),
-        downloadingChunks: new Set(),
-        currentMovie: null,
-        totalChunks: 0,
-        chunkMap: {},
-        assemblingChunks: new Map(),
-        chunkSources: new Map() // Track which chunks came from which source
-      },
+      peerConnections: new Map(),
+      dataChannels: new Map(),
+      receivedChunks: new Map(),
+      missingChunks: new Set(),
+      downloadingChunks: new Set(),
+      currentMovie: null,
+      totalChunks: 0,
+      chunkMap: {},
       downloadActive: false,
-      downloadInterval: null,
-      statsInterval: null,
+      downloadStartTime: null,
+      chunkSources: new Map(), // Track where each chunk came from
+      
+      // **NEW STREAMING VARIABLES**
+      streamingStarted: false,
+      lastStreamedChunks: 0,
+      streamingUpdateInterval: null,
+      
       stats: {
         totalDownloaded: 0,
-        p2pDownloaded: 0,
-        serverDownloaded: 0,
-        downloadSpeed: 0,
-        avgDownloadSpeed: 0,
-        downloadStartTime: null,
-        lastUpdateTime: null,
         chunksFromP2P: 0,
         chunksFromServer: 0,
-        networkQuality: 'Unknown',
-        speedHistory: []
+        downloadSpeed: 0,
+        totalBytes: 0
+      },// Optimized settings
+      settings: {
+        maxConcurrentChunks: 5,         // Reduced from 10 to prevent overwhelming server
+        p2pTimeout: 90000,              // Reduced from 15000ms
+        chunkRequestInterval: 1000,     // Slower chunk requests (was 500ms)
+        maxPeerConnections: 6,          // Reduced from 8
+        serverFallbackDelay: 15000,     // Reduced from 20000ms
+        retryAttempts: 3
+      },
+      // Parallel streaming state
+      parallelStreaming: {
+        enabled: false,
+        engineActive: false,
+        currentStream: null,
+        stats: {
+          chunksProcessed: 0,
+          totalChunks: 0,
+          processingSpeed: 0,
+          bufferHealth: 0,
+          cpuUtilization: 0,
+          activeWorkers: 0,
+          maxWorkers: 0,
+          bandwidthUsage: 0,
+          cacheHitRate: 0,
+          queueLength: 0,
+          avgResponseTime: 0
+        }
       }
     };
 
-    // Initialize WebTorrent
-    try {
-      APP.webTorrentClient = new WebTorrent();
-      APP.webTorrentClient.on('error', (err) => {
-        log(`WebTorrent error: ${err.message}`, 'error');
-      });
-    } catch (err) {
-      log(`Failed to initialize WebTorrent: ${err.message}`, 'warning');
-    }
-    
-    // Enhanced logging system
-    function log(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const logEntry = document.createElement('div');
-      logEntry.className = `log-entry log-${type}`;
-      logEntry.textContent = `[${timestamp}] ${message}`;
-      
-      const logsContainer = document.getElementById('logs');
-      logsContainer.appendChild(logEntry);
-      logsContainer.scrollTop = logsContainer.scrollHeight;
-      
-      // Keep only last 100 log entries
-      while (logsContainer.children.length > 100) {
-        logsContainer.removeChild(logsContainer.firstChild);
-      }
-      
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-
-    // Enhanced status update with network analytics
-    function updateStatus() {
-      document.getElementById('connectionStatus').textContent = 
-        APP.socket?.connected ? '🟢 Connected' : '🔴 Disconnected';
-      document.getElementById('peerId').textContent = 
-        APP.localId ? APP.localId.substring(0, 8) + '...' : 'Not Connected';
-      document.getElementById('activePeers').textContent = 
-        APP.p2p.connections.size;
-      document.getElementById('currentDownload').textContent = 
-        APP.p2p.currentMovie || 'None';
-        
-      // Network statistics
-      document.getElementById('downloadSpeed').textContent = 
-        `${(APP.stats.downloadSpeed / 1024).toFixed(1)} KB/s`;
-      document.getElementById('totalDownloaded').textContent = 
-        `${(APP.stats.totalDownloaded / (1024 * 1024)).toFixed(1)} MB`;
-        
-      // P2P efficiency
-      const totalChunks = APP.stats.chunksFromP2P + APP.stats.chunksFromServer;
-      const p2pEfficiency = totalChunks > 0 ? 
-        ((APP.stats.chunksFromP2P / totalChunks) * 100).toFixed(1) : 0;
-      document.getElementById('p2pEfficiency').textContent = `${p2pEfficiency}%`;
-      
-      // Network quality assessment
-      const avgSpeed = APP.stats.avgDownloadSpeed / 1024; // KB/s
-      let quality = 'Unknown';
-      if (avgSpeed > 500) quality = '🟢 Excellent';
-      else if (avgSpeed > 200) quality = '🟡 Good';
-      else if (avgSpeed > 50) quality = '🟠 Fair';
-      else if (avgSpeed > 0) quality = '🔴 Poor';
-      
-      document.getElementById('networkQuality').textContent = quality;
-      
-      // Update detailed stats in download panel
-      if (APP.downloadActive) {
-        document.getElementById('chunksTotal').textContent = APP.p2p.totalChunks;
-        document.getElementById('chunksP2P').textContent = APP.stats.chunksFromP2P;
-        document.getElementById('chunksServer').textContent = APP.stats.chunksFromServer;
-        document.getElementById('avgSpeed').textContent = (avgSpeed).toFixed(1);
-      }
-    }
-
-    // Track download statistics
-    function updateDownloadStats(chunkSize, source) {
-      const now = Date.now();
-      
-      if (!APP.stats.downloadStartTime) {
-        APP.stats.downloadStartTime = now;
-      }
-      
-      APP.stats.totalDownloaded += chunkSize;
-      
-      if (source === 'p2p') {
-        APP.stats.p2pDownloaded += chunkSize;
-        APP.stats.chunksFromP2P++;
-      } else {
-        APP.stats.serverDownloaded += chunkSize;
-        APP.stats.chunksFromServer++;
-      }
-      
-      // Calculate speed
-      if (APP.stats.lastUpdateTime) {
-        const timeDiff = (now - APP.stats.lastUpdateTime) / 1000; // seconds
-        const currentSpeed = chunkSize / timeDiff; // bytes per second
-        APP.stats.downloadSpeed = currentSpeed;
-        
-        // Keep speed history for average calculation
-        APP.stats.speedHistory.push(currentSpeed);
-        if (APP.stats.speedHistory.length > 10) {
-          APP.stats.speedHistory.shift();
-        }
-        
-        // Calculate average speed
-        APP.stats.avgDownloadSpeed = APP.stats.speedHistory.reduce((a, b) => a + b, 0) / APP.stats.speedHistory.length;
-      }
-      
-      APP.stats.lastUpdateTime = now;
-      updateStatus();
-    }
-
-    // Initialize socket connection with enhanced error handling
+    // Initialize socket connection with better error handling
     function initializeSocket() {
-      APP.socket = io("http://localhost:8080", {
-        timeout: 10000,
+      APP.socket = io(SERVER_URL, {
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 2000
+        reconnectionDelay: 1000
       });
       
       APP.socket.on('connect', () => {
         APP.localId = APP.socket.id;
         log('🚀 Connected to signaling server', 'success');
-        updateStatus();
+        updateConnectionStatus();
       });
       
       APP.socket.on('disconnect', (reason) => {
-        log(`🔌 Disconnected from signaling server: ${reason}`, 'warning');
-        cleanup();
-        updateStatus();
+        log(`🔌 Disconnected: ${reason}`, 'warning');
+        updateConnectionStatus();
       });
       
-      APP.socket.on('reconnect', (attemptNumber) => {
-        log(`🔄 Reconnected after ${attemptNumber} attempts`, 'success');
-        updateStatus();
+      APP.socket.on('reconnect', () => {
+        log('🔄 Reconnected to server', 'info');
+        updateConnectionStatus();
       });
-      
-      APP.socket.on('connect_error', (err) => {
-        log(`❌ Connection error: ${err.message}`, 'error');
-      });
-      
-      APP.socket.on('signal', handleSignal);
+        APP.socket.on('signal', handleSignal);
       APP.socket.on('peersFound', handlePeersFound);
+      
+      // Parallel streaming event handlers
+      APP.socket.on('parallelStreamStarted', handleParallelStreamStarted);
+      APP.socket.on('parallelStreamError', handleParallelStreamError);
+      APP.socket.on('streamingProgressUpdate', handleStreamingProgressUpdate);
+      APP.socket.on('streamChunk', handleStreamChunk);
+      APP.socket.on('streamError', handleStreamError);
+      APP.socket.on('streamingStats', handleStreamingStats);
     }
 
     // Enhanced WebRTC signaling with better error handling
@@ -639,50 +498,44 @@
       
       if (from === APP.localId) return;
       
-      log(`📡 Signal from ${from.substring(0, 8)}: ${signal.type || 'ice-candidate'}`);
-      
       try {
-        if (!APP.p2p.connections.has(from)) {
+        if (!APP.peerConnections.has(from)) {
           await createPeerConnection(from);
         }
         
-        const pc = APP.p2p.connections.get(from);
+        const pc = APP.peerConnections.get(from);
         
         if (signal.type === 'offer') {
           await pc.setRemoteDescription(signal);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          APP.socket.emit('signal', { 
-            to: from, 
-            from: APP.localId, 
-            signal: answer 
-          });
-          log(`📤 Sent answer to ${from.substring(0, 8)}`, 'success');
+          APP.socket.emit('signal', { to: from, from: APP.localId, signal: answer });
+          log(`📤 Sent answer to ${from.substring(0, 8)}`, 'p2p');
         } else if (signal.type === 'answer') {
           await pc.setRemoteDescription(signal);
-          log(`📥 Set remote description for ${from.substring(0, 8)}`, 'success');
+          log(`📥 Received answer from ${from.substring(0, 8)}`, 'p2p');
         } else if (signal.candidate) {
           await pc.addIceCandidate(signal);
         }
       } catch (err) {
-        log(`❌ Signal handling error with ${from.substring(0, 8)}: ${err.message}`, 'error');
+        log(`❌ Signal error with ${from.substring(0, 8)}: ${err.message}`, 'error');
+        // Clean up failed connection
+        APP.peerConnections.delete(from);
+        APP.dataChannels.delete(from);
+        updateConnectionStatus();
       }
     }
 
     // Enhanced peer connection creation
     async function createPeerConnection(peerId) {
-      log(`🔗 Creating peer connection with ${peerId.substring(0, 8)}`);
-      
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' }
-        ],
-        iceCandidatePoolSize: 10
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
       });
       
-      APP.p2p.connections.set(peerId, pc);
+      APP.peerConnections.set(peerId, pc);
       
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -696,340 +549,747 @@
       
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
-        log(`🔄 Connection state with ${peerId.substring(0, 8)}: ${state}`);
-        updateStatus();
-        updatePeerList();
+        log(`🔗 Connection with ${peerId.substring(0, 8)}: ${state}`, 'info');
         
-        if (state === 'failed' || state === 'closed') {
-          APP.p2p.connections.delete(peerId);
-          APP.p2p.dataChannels.delete(peerId);
-          updatePeerList();
+        if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+          // Clean up failed connection
+          APP.peerConnections.delete(peerId);
+          APP.dataChannels.delete(peerId);
+          log(`🧹 Cleaned up connection with ${peerId.substring(0, 8)}`, 'warning');
         }
+        
+        updateConnectionStatus();
+        updatePeerList();
       };
       
       pc.ondatachannel = (event) => {
         const channel = event.channel;
-        APP.p2p.dataChannels.set(peerId, channel);
+        APP.dataChannels.set(peerId, channel);
         setupDataChannel(channel, peerId);
-        log(`📊 Received data channel from ${peerId.substring(0, 8)}`, 'success');
       };
       
       return pc;
     }
 
-    // Enhanced data channel setup with better message handling
+    // Enhanced data channel setup
     function setupDataChannel(channel, peerId) {
       channel.binaryType = 'arraybuffer';
       
       channel.onopen = () => {
-        log(`✅ Data channel with ${peerId.substring(0, 8)} opened`, 'success');
+        log(`✅ P2P channel opened with ${peerId.substring(0, 8)}`, 'success');
+        updateConnectionStatus();
         updatePeerList();
-        requestMissingChunks();
       };
       
       channel.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          handleP2PMessage(message, peerId);
-        } catch (err) {
-          log(`❌ Error parsing message from ${peerId.substring(0, 8)}: ${err.message}`, 'error');
-        }
+        handleDataChannelMessage(event.data, peerId);
       };
       
       channel.onclose = () => {
-        log(`🔌 Data channel with ${peerId.substring(0, 8)} closed`, 'warning');
+        log(`🔌 P2P channel closed with ${peerId.substring(0, 8)}`, 'warning');
+        APP.dataChannels.delete(peerId);
+        updateConnectionStatus();
         updatePeerList();
       };
       
-      channel.onerror = (err) => {
-        log(`❌ Data channel error with ${peerId.substring(0, 8)}`, 'error');
+      channel.onerror = (error) => {
+        log(`❌ P2P channel error with ${peerId.substring(0, 8)}: ${error}`, 'error');
       };
     }
 
-    // Enhanced P2P message handling
-    function handleP2PMessage(message, peerId) {
+    // Enhanced message handling
+    function handleDataChannelMessage(data, peerId) {
+      try {
+        if (typeof data === 'string') {
+          const message = JSON.parse(data);
+          handleControlMessage(message, peerId);
+        } else {
+          // Binary chunk data
+          handleBinaryChunk(data, peerId);
+        }
+      } catch (err) {
+        log(`❌ Message error from ${peerId.substring(0, 8)}: ${err.message}`, 'error');
+      }
+    }
+
+    // Control message handling
+    function handleControlMessage(message, peerId) {
       switch (message.type) {
         case 'chunkRequest':
-          handleChunkRequest(message, peerId);
+          sendChunkToPeer(message.chunkIndex, peerId);
           break;
-        case 'chunkStart':
-          handleChunkStart(message, peerId);
+        case 'chunkNotAvailable':
+          handleChunkNotAvailable(message.chunkIndex, peerId);
           break;
-        case 'chunkPiece':
-          handleChunkPiece(message, peerId);
-          break;
-        case 'chunkComplete':
-          handleChunkComplete(message, peerId);
-          break;
-        default:
-          log(`Unknown message type: ${message.type}`, 'warning');
       }
     }
 
-    // Handle chunk request from peer
-    function handleChunkRequest(message, peerId) {
-      const { movie, chunkIndex } = message;
-      log(`📥 Peer ${peerId.substring(0, 8)} requested chunk ${chunkIndex} of ${movie}`);
-      
-      const movieChunks = APP.p2p.receivedChunks.get(movie);
+    // Handle binary chunk data
+    function handleBinaryChunk(data, peerId) {
+      try {
+        const view = new DataView(data);
+        const chunkIndex = view.getUint32(0);
+        const chunkData = new Uint8Array(data.slice(4));
+        
+        receiveChunk(chunkIndex, chunkData, 'p2p', peerId);
+        log(`📥 Received chunk ${chunkIndex} from peer ${peerId.substring(0, 8)} (${formatBytes(chunkData.length)})`, 'success');
+      } catch (err) {
+        log(`❌ Error processing chunk from ${peerId.substring(0, 8)}: ${err.message}`, 'error');
+      }
+    }
+
+    // Enhanced chunk sending
+    function sendChunkToPeer(chunkIndex, peerId) {
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
       if (movieChunks && movieChunks.has(chunkIndex)) {
         const chunkData = movieChunks.get(chunkIndex);
-        const channel = APP.p2p.dataChannels.get(peerId);
+        const channel = APP.dataChannels.get(peerId);
         
         if (channel && channel.readyState === 'open') {
-          sendChunkToPeer(chunkData, movie, chunkIndex, channel, peerId);
+          try {
+            // Send as binary with chunk index header
+            const buffer = new ArrayBuffer(4 + chunkData.length);
+            const view = new DataView(buffer);
+            view.setUint32(0, chunkIndex);
+            new Uint8Array(buffer, 4).set(chunkData);
+            
+            channel.send(buffer);
+            log(`📤 Sent chunk ${chunkIndex} to peer ${peerId.substring(0, 8)} (${formatBytes(chunkData.length)})`, 'p2p');
+          } catch (err) {
+            log(`❌ Failed to send chunk ${chunkIndex} to ${peerId.substring(0, 8)}: ${err.message}`, 'error');
+          }
         }
       } else {
-        log(`❌ Cannot fulfill chunk ${chunkIndex} request`, 'warning');
+        // Send "not available" message
+        const channel = APP.dataChannels.get(peerId);
+        if (channel && channel.readyState === 'open') {
+          channel.send(JSON.stringify({
+            type: 'chunkNotAvailable',
+            chunkIndex: chunkIndex
+          }));
+        }
       }
     }
 
-    // Send chunk to peer in small pieces
-    function sendChunkToPeer(chunkData, movie, chunkIndex, channel, peerId) {
-      try {
-        const pieceSize = 8192; // 8KB pieces
-        const totalPieces = Math.ceil(chunkData.length / pieceSize);
-        
-        // Send start signal
-        channel.send(JSON.stringify({
-          type: 'chunkStart',
-          movie,
-          chunkIndex,
-          totalPieces,
-          totalSize: chunkData.length
-        }));
-        
-        // Send pieces with small delays to prevent overwhelming
-        let pieceIndex = 0;
-        const sendNextPiece = () => {
-          if (pieceIndex < totalPieces && channel.readyState === 'open') {
-            const start = pieceIndex * pieceSize;
-            const end = Math.min(start + pieceSize, chunkData.length);
-            const piece = chunkData.slice(start, end);
-            
-            channel.send(JSON.stringify({
-              type: 'chunkPiece',
-              movie,
-              chunkIndex,
-              pieceIndex,
-              data: Array.from(piece)
-            }));
-            
-            pieceIndex++;
-            setTimeout(sendNextPiece, 10); // 10ms delay between pieces
-          } else if (pieceIndex >= totalPieces) {
-            // Send completion
-            channel.send(JSON.stringify({
-              type: 'chunkComplete',
-              movie,
-              chunkIndex
-            }));
-            
-            log(`📤 Sent chunk ${chunkIndex} to ${peerId.substring(0, 8)}`, 'success');
-          }
-        };
-        
-        sendNextPiece();
-      } catch (err) {
-        log(`❌ Error sending chunk: ${err.message}`, 'error');
-      }
-    }
-
-    // Handle chunk assembly
-    function handleChunkStart(message, peerId) {
-      const { movie, chunkIndex, totalPieces, totalSize } = message;
-      const key = `${movie}_${chunkIndex}`;
+    // Handle when peer doesn't have chunk
+    function handleChunkNotAvailable(chunkIndex, peerId) {
+      const chunkKey = `${APP.currentMovie}_${chunkIndex}`;
+      log(`⚠️ Peer ${peerId.substring(0, 8)} doesn't have chunk ${chunkIndex}`, 'warning');
       
-      APP.p2p.assemblingChunks.set(key, {
-        pieces: new Array(totalPieces),
-        receivedPieces: 0,
-        totalPieces,
-        totalSize,
-        peerId,
-        startTime: Date.now()
+      // Try next peer or fallback to server
+      if (APP.downloadingChunks.has(chunkKey)) {
+        setTimeout(() => {
+          if (APP.downloadingChunks.has(chunkKey)) {
+            downloadChunkFromServer(chunkIndex, chunkKey);
+          }
+        }, 1000);
+      }
+    }    // Enhanced chunk receiving with real-time streaming
+    function receiveChunk(chunkIndex, chunkData, source, peerId = null) {
+      if (!APP.receivedChunks.has(APP.currentMovie)) {
+        APP.receivedChunks.set(APP.currentMovie, new Map());
+      }
+      
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      movieChunks.set(chunkIndex, chunkData);
+      
+      const chunkKey = `${APP.currentMovie}_${chunkIndex}`;
+      APP.missingChunks.delete(chunkKey);
+      APP.downloadingChunks.delete(chunkKey);
+      
+      // Track source
+      APP.chunkSources.set(chunkKey, source);
+      
+      // Update stats
+      if (source === 'p2p') {
+        APP.stats.chunksFromP2P++;
+      } else {
+        APP.stats.chunksFromServer++;
+      }
+      
+      APP.stats.totalDownloaded += chunkData.length;
+      APP.stats.totalBytes += chunkData.length;
+      
+      // Register chunk with tracker
+      APP.socket.emit('registerChunk', { 
+        movie: APP.currentMovie, 
+        chunkIndex 
       });
       
-      log(`🔄 Starting to receive chunk ${chunkIndex} from ${peerId.substring(0, 8)} (${totalPieces} pieces)`);
-    }
-
-    function handleChunkPiece(message, peerId) {
-      const { movie, chunkIndex, pieceIndex, data } = message;
-      const key = `${movie}_${chunkIndex}`;
-      const assembly = APP.p2p.assemblingChunks.get(key);
+      updateProgress();
+      updateChunkVisualization();
+      updateDownloadSpeed();
       
-      if (assembly) {
-        assembly.pieces[pieceIndex] = new Uint8Array(data);
-        assembly.receivedPieces++;
+      // **REAL-TIME STREAMING**: Start playing if we have enough consecutive chunks
+      checkStreamingReadiness();
+      
+      // Check if download should complete (allow some missing chunks)
+      if (shouldCompleteDownload()) {
+        completeDownload();
       }
-    }
-
-    function handleChunkComplete(message, peerId) {
-      const { movie, chunkIndex } = message;
-      const key = `${movie}_${chunkIndex}`;
-      const assembly = APP.p2p.assemblingChunks.get(key);
+    }    // **ENHANCED**: Check if we can start streaming with REAL torrent chunks
+    function checkStreamingReadiness() {
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      if (!movieChunks || movieChunks.size < 3) return; // Need at least 3 chunks
       
-      if (assembly && assembly.receivedPieces === assembly.totalPieces) {
-        // Reassemble chunk
-        const chunkData = new Uint8Array(assembly.totalSize);
-        let offset = 0;
-        
-        for (const piece of assembly.pieces) {
-          chunkData.set(piece, offset);
-          offset += piece.length;
-        }
-        
-        // Store the chunk
-        if (!APP.p2p.receivedChunks.has(movie)) {
-          APP.p2p.receivedChunks.set(movie, new Map());
-        }
-        
-        APP.p2p.receivedChunks.get(movie).set(chunkIndex, chunkData);
-        APP.p2p.missingChunks.delete(key);
-        APP.p2p.downloadingChunks.delete(key);
-        APP.p2p.assemblingChunks.delete(key);
-        
-        // Track chunk source
-        APP.p2p.chunkSources.set(key, 'p2p');
-        
-        // Update statistics
-        updateDownloadStats(assembly.totalSize, 'p2p');
-        
-        // Register with tracker
-        APP.socket.emit('registerChunk', { movie, chunkIndex });
-        
-        log(`✅ Received complete chunk ${chunkIndex} from ${peerId.substring(0, 8)}`, 'success');
-        
-        updateProgress();
-        updateChunkVisualization();
-        
-        if (APP.p2p.missingChunks.size === 0) {
-          completeDownload(movie);
+      // Check if we have the first few consecutive chunks for streaming
+      let consecutiveFromStart = 0;
+      for (let i = 0; i < Math.min(10, APP.totalChunks); i++) { // Check first 10 chunks
+        if (movieChunks.has(i)) {
+          consecutiveFromStart++;
+        } else {
+          break;
         }
       }
-    }
-
-    // Enhanced chunk request with better error handling
-    async function requestMissingChunks() {
-      if (!APP.p2p.currentMovie || APP.p2p.missingChunks.size === 0) return;
       
-      const movie = APP.p2p.currentMovie;
-      const missingChunks = Array.from(APP.p2p.missingChunks);
+      // If we have at least 3 consecutive chunks from the start, enable REAL streaming
+      if (consecutiveFromStart >= 3 && !APP.streamingStarted) {
+        APP.streamingStarted = true;
+        log(`🎬 Starting REAL video streaming with ${consecutiveFromStart} consecutive chunks ready!`, 'success');
+        startRealTimeStreaming();
+      }
+    }// **ENHANCED**: Start real-time streaming with REAL video chunks
+    function startRealTimeStreaming() {
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      const availableChunks = [];
       
-      for (const chunkKey of missingChunks.slice(0, 3)) { // Limit concurrent downloads
-        if (APP.p2p.downloadingChunks.has(chunkKey)) continue;
-        
-        const chunkIndex = parseInt(chunkKey.split('_')[1]);
-        APP.p2p.downloadingChunks.add(chunkKey);
-        
-        // Try P2P first
-        const peersWithChunk = APP.p2p.chunkMap[chunkIndex] || [];
-        let chunkRequested = false;
-        
-        for (const peerId of peersWithChunk) {
-          if (peerId === APP.localId) continue;
+      // Get all consecutive chunks from the beginning (required for proper MP4 streaming)
+      for (let i = 0; i < APP.totalChunks; i++) {
+        if (movieChunks.has(i)) {
+          availableChunks.push(movieChunks.get(i));
+        } else {
+          break; // Stop at first missing chunk to maintain video integrity
+        }
+      }
+      
+      if (availableChunks.length > 0) {
+        try {
+          // Create proper MP4 blob for streaming REAL video content
+          const partialBlob = new Blob(availableChunks, { type: 'video/mp4' });
+          const streamUrl = URL.createObjectURL(partialBlob);
           
-          const channel = APP.p2p.dataChannels.get(peerId);
-          if (channel && channel.readyState === 'open') {
-            channel.send(JSON.stringify({
-              type: 'chunkRequest',
-              movie,
-              chunkIndex
-            }));
-            log(`📤 Requested chunk ${chunkIndex} from peer ${peerId.substring(0, 8)}`);
-            chunkRequested = true;
-            break;
+          // Calculate approximate playable duration
+          const estimatedDuration = (availableChunks.length / APP.totalChunks) * 120; // Assume ~2hr movie
+          
+          document.getElementById('videoPlayer').innerHTML = `
+            <h4>🎬 LIVE STREAMING - Real Torrent Video (${availableChunks.length}/${APP.totalChunks} chunks)</h4>
+            <video controls autoplay muted style="max-width: 100%; margin: 20px 0;" preload="metadata" id="liveVideo">
+              <source src="${streamUrl}" type="video/mp4">
+              Your browser does not support video playback.
+            </video>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #28a745;">
+              <strong>🔴 LIVE STREAMING ACTIVE:</strong> Playing real video chunks from P2P network<br>
+              📊 Buffer: ~${estimatedDuration.toFixed(1)} minutes available<br>
+              🌐 Sources: ${APP.stats.chunksFromP2P} P2P + ${APP.stats.chunksFromServer} server chunks<br>
+              <small>Video extends automatically as peers share more real chunks</small>
+            </div>
+          `;
+          
+          // Enhanced streaming with better update frequency for REAL video
+          APP.streamingUpdateInterval = setInterval(updateStreamingBlob, 1500);
+          
+          log(`🎬 Started REAL video streaming with ${availableChunks.length} consecutive chunks`, 'success');
+          
+        } catch (err) {
+          log(`❌ Error starting real-time streaming: ${err.message}`, 'error');
+        }
+      }
+    }    // **ENHANCED**: Update streaming blob with new real chunks as they arrive
+    function updateStreamingBlob() {
+      if (!APP.streamingStarted || !APP.currentMovie) return;
+      
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      const availableChunks = [];
+      
+      // Get all consecutive chunks for REAL video playback
+      for (let i = 0; i < APP.totalChunks; i++) {
+        if (movieChunks.has(i)) {
+          availableChunks.push(movieChunks.get(i));
+        } else {
+          break; // Stop at first missing chunk to maintain video integrity
+        }
+      }
+      
+      // Update video if we have more REAL chunks
+      if (availableChunks.length > APP.lastStreamedChunks) {
+        APP.lastStreamedChunks = availableChunks.length;
+        
+        try {
+          // Create updated blob with more REAL video chunks
+          const updatedBlob = new Blob(availableChunks, { type: 'video/mp4' });
+          const newUrl = URL.createObjectURL(updatedBlob);
+          
+          const videoElement = document.querySelector('#videoPlayer video');
+          if (videoElement) {
+            const currentTime = videoElement.currentTime;
+            const wasPlaying = !videoElement.paused;
+            
+            // Save playback state
+            videoElement.src = newUrl;
+            videoElement.load();
+            
+            // Restore playback position and state
+            videoElement.currentTime = currentTime;
+            if (wasPlaying) {
+              videoElement.play().catch(err => {
+                log(`⚠️ Autoplay blocked, user interaction required`, 'warning');
+              });
+            }
+            
+            // Update streaming status with REAL chunk info
+            const estimatedDuration = (availableChunks.length / APP.totalChunks) * 120;
+            document.querySelector('#videoPlayer h4').textContent = 
+              `🎬 LIVE STREAMING - Real Torrent Video (${availableChunks.length}/${APP.totalChunks} chunks)`;
+            
+            // Update buffer info
+            const bufferInfo = document.querySelector('#videoPlayer div');
+            if (bufferInfo) {
+              bufferInfo.innerHTML = `
+                <strong>🔴 LIVE STREAMING ACTIVE:</strong> Playing real video chunks from P2P network<br>
+                📊 Buffer: ~${estimatedDuration.toFixed(1)} minutes available<br>
+                🌐 Sources: ${APP.stats.chunksFromP2P} P2P + ${APP.stats.chunksFromServer} server chunks<br>
+                <small>Video extends automatically as peers share more real chunks</small>
+              `;
+            }
+            
+            log(`🎬 Updated stream with ${availableChunks.length} REAL chunks (~${estimatedDuration.toFixed(1)}min)`, 'success');
+          }
+        } catch (err) {
+          log(`❌ Error updating REAL stream: ${err.message}`, 'error');
+        }
+      }
+    }
+
+    // Smart download completion detection
+    function shouldCompleteDownload() {
+      if (APP.missingChunks.size === 0) {
+        return true; // All chunks received
+      }
+      
+      // Check if we've been stuck for too long
+      const stuckThreshold = 60000; // 1 minute
+      const now = Date.now();
+      
+      // Count recently failed chunks
+      const recentlyFailedChunks = Array.from(APP.missingChunks).filter(chunkKey => {
+        return localStorage.getItem(`failed_${chunkKey}`) === 'true';
+      });
+      
+      // Complete if most chunks are downloaded and remaining are permanently failed
+      const receivedChunks = APP.receivedChunks.get(APP.currentMovie)?.size || 0;
+      const completionThreshold = Math.floor(APP.totalChunks * 0.85); // 85% threshold
+      
+      if (receivedChunks >= completionThreshold && recentlyFailedChunks.length > 0) {
+        log(`🎯 Completing download with ${receivedChunks}/${APP.totalChunks} chunks (${(receivedChunks/APP.totalChunks*100).toFixed(1)}%)`, 'info');
+        return true;
+      }
+      
+      return false;
+    }
+
+    // Enhanced peers found handler
+    async function handlePeersFound(data) {
+      const { movie, peers, chunkMap } = data;
+      APP.chunkMap = chunkMap;
+      
+      log(`🔍 Found ${peers.length} peers for ${movie}`, 'info');
+      
+      // Limit peer connections
+      const maxPeers = Math.min(peers.length, APP.settings.maxPeerConnections);
+      const selectedPeers = peers.slice(0, maxPeers);
+      
+      // Connect to peers
+      for (const peerId of selectedPeers) {
+        if (peerId !== APP.localId && !APP.peerConnections.has(peerId)) {
+          try {
+            const pc = await createPeerConnection(peerId);
+            const channel = pc.createDataChannel('chunks', {
+              ordered: false,
+              maxRetransmits: 0
+            });
+            APP.dataChannels.set(peerId, channel);
+            setupDataChannel(channel, peerId);
+            
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            
+            APP.socket.emit('signal', {
+              to: peerId,
+              from: APP.localId,
+              signal: offer
+            });
+            
+            log(`📤 Sent offer to peer ${peerId.substring(0, 8)}`, 'p2p');
+          } catch (err) {
+            log(`❌ Failed to connect to peer ${peerId.substring(0, 8)}: ${err.message}`, 'error');
           }
         }
-        
-        // Fallback to server if no P2P
-        if (!chunkRequested) {
-          downloadChunkFromServer(movie, chunkIndex, chunkKey);
-        }
       }
+      
+      // Start requesting chunks after peer connections
+      setTimeout(startChunkRequests, 2000);
+    }    // Enhanced chunk requesting system with streaming priority
+    function startChunkRequests() {
+      if (!APP.downloadActive) return;
+      
+      const requestChunks = () => {
+        if (!APP.downloadActive || APP.missingChunks.size === 0) return;
+        
+        const missingArray = Array.from(APP.missingChunks);
+        
+        // **ENHANCED**: Prioritize first chunks for streaming
+        const sortedChunks = missingArray.sort((a, b) => {
+          const indexA = parseInt(a.split('_')[1]);
+          const indexB = parseInt(b.split('_')[1]);
+          
+          // Prioritize first 10 chunks for streaming
+          const priorityA = indexA < 10 ? indexA : indexA + 1000;
+          const priorityB = indexB < 10 ? indexB : indexB + 1000;
+          
+          return priorityA - priorityB;
+        });
+        
+        const batchSize = Math.min(APP.settings.maxConcurrentChunks, sortedChunks.length);
+        
+        for (let i = 0; i < batchSize; i++) {
+          const chunkKey = sortedChunks[i];
+          if (APP.downloadingChunks.has(chunkKey)) continue;
+          
+          const chunkIndex = parseInt(chunkKey.split('_')[1]);
+          requestChunkOptimized(chunkIndex, chunkKey);
+        }
+        
+        if (APP.missingChunks.size > 0) {
+          setTimeout(requestChunks, APP.settings.chunkRequestInterval);
+        }
+      };
+      
+      requestChunks();
     }
 
-    // Download chunk from server
-    async function downloadChunkFromServer(movie, chunkIndex, chunkKey) {
+    // Optimized chunk request with better P2P priority
+    function requestChunkOptimized(chunkIndex, chunkKey) {
+      APP.downloadingChunks.add(chunkKey);
+      
+      // Try P2P first with proper priority
+      let p2pRequested = false;
+      const peersWithChunk = APP.chunkMap[chunkIndex] || [];
+      
+      for (const peerId of peersWithChunk) {
+        const channel = APP.dataChannels.get(peerId);
+        if (channel && channel.readyState === 'open') {
+          channel.send(JSON.stringify({
+            type: 'chunkRequest',
+            chunkIndex: chunkIndex
+          }));
+          p2pRequested = true;
+          log(`📤 Requested chunk ${chunkIndex} from peer ${peerId.substring(0, 8)}`, 'p2p');
+          break;
+        }
+      }
+      
+      // Server fallback only after significant delay
+      if (!p2pRequested) {
+        // No P2P peers available, try server immediately
+        downloadChunkFromServer(chunkIndex, chunkKey);
+      } else {
+        // P2P requested, set server fallback with delay
+        setTimeout(() => {
+          if (APP.downloadingChunks.has(chunkKey)) {
+            log(`⏰ P2P timeout for chunk ${chunkIndex}, trying server`, 'warning');
+            downloadChunkFromServer(chunkIndex, chunkKey);
+          }
+        }, APP.settings.p2pTimeout);
+      }
+    }    // Enhanced server download with better error handling
+    async function downloadChunkFromServer(chunkIndex, chunkKey) {
       try {
+        log(`🌐 Downloading chunk ${chunkIndex} from server`, 'info');
+        
         const response = await fetch(
-          `http://localhost:8080/download_chunk?movie=${encodeURIComponent(movie)}&chunkIndex=${chunkIndex}`
+          `${SERVER_URL}/download_chunk?movie=${encodeURIComponent(APP.currentMovie)}&chunkIndex=${chunkIndex}`,
+          { 
+            signal: AbortSignal.timeout(45000), // 45 second timeout
+            headers: { 'Cache-Control': 'no-cache' }
+          }
         );
         
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
           const chunkData = new Uint8Array(arrayBuffer);
-          
-          if (!APP.p2p.receivedChunks.has(movie)) {
-            APP.p2p.receivedChunks.set(movie, new Map());
-          }
-          
-          APP.p2p.receivedChunks.get(movie).set(chunkIndex, chunkData);
-          APP.p2p.missingChunks.delete(chunkKey);
-          APP.p2p.downloadingChunks.delete(chunkKey);
-          
-          // Track chunk source
-          APP.p2p.chunkSources.set(chunkKey, 'server');
-          
-          // Update statistics
-          updateDownloadStats(chunkData.length, 'server');
-          
-          APP.socket.emit('registerChunk', { movie, chunkIndex });
-          log(`🌐 Downloaded chunk ${chunkIndex} from server`, 'success');
-          
-          updateProgress();
-          updateChunkVisualization();
-          
-          if (APP.p2p.missingChunks.size === 0) {
-            completeDownload(movie);
-          }
+          receiveChunk(chunkIndex, chunkData, 'server');
+          log(`✅ Downloaded chunk ${chunkIndex} from server (${formatBytes(chunkData.length)})`, 'success');
         } else {
-          throw new Error(`Server returned ${response.status}`);
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(`Server returned ${response.status}: ${errorData.error || response.statusText}`);
         }
       } catch (err) {
-        log(`❌ Failed to download chunk ${chunkIndex}: ${err.message}`, 'error');
-        APP.p2p.downloadingChunks.delete(chunkKey);
+        log(`❌ Server download failed for chunk ${chunkIndex}: ${err.message}`, 'error');
+        APP.downloadingChunks.delete(chunkKey);
+        
+        // Enhanced retry mechanism with exponential backoff
+        let retryCount = parseInt(localStorage.getItem(`retry_${chunkKey}`) || '0');
+        if (retryCount < APP.settings.retryAttempts) {
+          retryCount++;
+          localStorage.setItem(`retry_${chunkKey}`, retryCount.toString());
+          
+          // Exponential backoff: 3s, 6s, 12s
+          const backoffDelay = 3000 * Math.pow(2, retryCount - 1);
+          
+          setTimeout(() => {
+            if (APP.downloadingChunks.has(chunkKey)) return; // Already downloading
+            if (!APP.downloadActive) return; // Download stopped
+            
+            APP.missingChunks.add(chunkKey);
+            log(`🔄 Retrying chunk ${chunkIndex} (attempt ${retryCount}/${APP.settings.retryAttempts})`, 'info');
+          }, backoffDelay);
+        } else {
+          log(`❌ Gave up on chunk ${chunkIndex} after ${retryCount} attempts`, 'error');
+          // Mark as permanently failed to avoid infinite retries
+          localStorage.setItem(`failed_${chunkKey}`, 'true');
+        }
+      }
+    }    // Enhanced download start
+    async function startDownload(movie) {
+      if (APP.downloadActive) {
+        log('⚠️ Download already in progress', 'warning');
+        return;
+      }
+      
+      APP.downloadActive = true;
+      APP.currentMovie = movie.title;
+      APP.downloadStartTime = Date.now();
+      
+      // Initialize totalChunks with safe default FIRST
+      APP.totalChunks = 100; // Safe default to prevent NaN errors
+      
+      log(`🚀 Starting optimized download: ${movie.title}`, 'info');
+        // Store magnet link for BOTH trackers
+      if (movie.magnet_link) {
+        try {
+          // Store for main tracker
+          await fetch(`${SERVER_URL}/store_magnet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              movie: movie.title,
+              magnetLink: movie.magnet_link
+            })
+          });
+          
+          // Store for parallel tracker too
+          await fetch(`${SERVER_URL}/parallel/store_magnet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              movie: movie.title,
+              magnetLink: movie.magnet_link
+            })
+          });
+          
+          log(`💾 Stored magnet link for ${movie.title} in both trackers`, 'info');
+        } catch (err) {
+          log(`⚠️ Failed to store magnet link: ${err.message}`, 'warning');
+        }
+      } else {
+        log(`⚠️ No magnet link available for ${movie.title}`, 'warning');
+      }
+      
+      // Get movie info dynamically
+      try {
+        const response = await fetch(`${SERVER_URL}/get_movie_info?movie=${encodeURIComponent(movie.title)}`);
+        const movieInfo = await response.json();
+        const calculatedChunks = movieInfo.totalChunks || Math.ceil((movieInfo.fileSize || 100 * 1024 * 1024) / (1024 * 1024));
+        
+        // Only update if we get a valid number
+        if (calculatedChunks && calculatedChunks > 0) {
+          APP.totalChunks = calculatedChunks;
+        }
+        
+        log(`📊 Movie info: ${APP.totalChunks} chunks (${formatBytes(movieInfo.fileSize || 0)})`, 'info');
+      } catch (err) {
+        log(`❌ Failed to get movie info: ${err.message}`, 'error');
+        // Keep the safe default (100 chunks)
+        log(`📊 Using default ${APP.totalChunks} chunks`, 'info');
+      }
+      
+      // Initialize missing chunks
+      APP.missingChunks.clear();
+      APP.downloadingChunks.clear();
+      APP.chunkSources.clear();
+      for (let i = 0; i < APP.totalChunks; i++) {
+        APP.missingChunks.add(`${movie.title}_${i}`);
+      }
+      
+      // Reset stats
+      APP.stats = {
+        totalDownloaded: 0,
+        chunksFromP2P: 0,
+        chunksFromServer: 0,
+        downloadSpeed: 0,
+        totalBytes: 0
+      };
+      
+      // Show download panel
+      document.getElementById('downloadPanel').style.display = 'block';
+      updateProgress();
+      updateChunkVisualization();
+      
+      // Find peers
+      APP.socket.emit('findPeers', { movie: movie.title });
+      
+      log(`🔍 Looking for peers and starting download...`, 'info');
+    }// Enhanced download completion
+    function completeDownload() {
+      const downloadTime = (Date.now() - APP.downloadStartTime) / 1000;
+      const avgSpeed = APP.stats.totalBytes / downloadTime / 1024; // KB/s
+      
+      log(`🎉 Download complete in ${downloadTime.toFixed(1)}s!`, 'success');
+      log(`📊 P2P: ${APP.stats.chunksFromP2P} chunks | Server: ${APP.stats.chunksFromServer} chunks`, 'info');
+      log(`⚡ Average speed: ${avgSpeed.toFixed(1)} KB/s`, 'info');
+      
+      APP.downloadActive = false;
+      
+      // **CLEANUP STREAMING**
+      if (APP.streamingUpdateInterval) {
+        clearInterval(APP.streamingUpdateInterval);
+        APP.streamingUpdateInterval = null;
+      }
+      APP.streamingStarted = false;
+      APP.lastStreamedChunks = 0;
+      
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      const chunks = [];
+      
+      for (let i = 0; i < APP.totalChunks; i++) {
+        if (movieChunks.has(i)) {
+          chunks.push(movieChunks.get(i));
+        } else {
+          log(`⚠️ Missing chunk ${i}, using empty chunk`, 'warning');
+          chunks.push(new Uint8Array(1024 * 1024)); // 1MB empty chunk
+        }
+      }
+      
+      try {
+        // Create final complete video blob
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        
+        const p2pEfficiency = ((APP.stats.chunksFromP2P / APP.totalChunks) * 100).toFixed(1);
+        
+        document.getElementById('videoPlayer').innerHTML = `
+          <h4>🎬 Download Complete!</h4>
+          <video controls style="max-width: 100%; margin: 20px 0;" preload="metadata">
+            <source src="${url}" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>📊 Download Statistics:</strong><br>
+            🔵 P2P Chunks: ${APP.stats.chunksFromP2P} (${p2pEfficiency}%)<br>
+            🟢 Server Chunks: ${APP.stats.chunksFromServer}<br>
+            ⚡ Average Speed: ${avgSpeed.toFixed(1)} KB/s<br>
+            ⏱️ Total Time: ${downloadTime.toFixed(1)}s<br>
+            🎬 <strong>Real-time streaming was ${APP.streamingStarted ? 'enabled' : 'disabled'}</strong>
+          </div>
+          <a href="${url}" download="${APP.currentMovie}.mp4" 
+             style="display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 8px; margin: 5px;">
+            📥 Download File
+          </a>
+          <button onclick="startNewDownload()" 
+             style="display: inline-block; padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 8px; margin: 5px; cursor: pointer;">
+            🚀 Start New Download
+          </button>
+        `;
+      } catch (err) {
+        log(`❌ Error creating video: ${err.message}`, 'error');
+      }
+      
+      updateProgress();
+      updateChunkVisualization();
+    }
+
+    // Start new download function
+    function startNewDownload() {
+      document.getElementById('downloadPanel').style.display = 'none';
+      document.getElementById('videoPlayer').innerHTML = '';
+      APP.currentMovie = null;
+      APP.downloadActive = false;
+      updateConnectionStatus();
+    }    // Enhanced progress update
+    function updateProgress() {
+      if (!APP.currentMovie) return;
+      
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
+      const received = movieChunks ? movieChunks.size : 0;
+      
+      // Ensure totalChunks is valid
+      if (!APP.totalChunks || APP.totalChunks === 0) {
+        APP.totalChunks = 100; // Default fallback
+      }
+      
+      const progress = (received / APP.totalChunks) * 100;
+      const totalBytes = APP.stats.totalBytes || 0;
+      
+      // Safe progress display
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const downloadProgress = document.getElementById('downloadProgress');
+      
+      if (progressFill) {
+        progressFill.style.width = `${Math.min(progress, 100)}%`;
+      }
+      
+      if (progressText) {
+        progressText.textContent = 
+          `${progress.toFixed(1)}% (${received}/${APP.totalChunks} chunks)`;
+      }
+      
+      if (downloadProgress) {
+        downloadProgress.textContent = `${progress.toFixed(1)}%`;
+      }
+      
+      // Update P2P efficiency with safe calculation
+      const totalChunksDownloaded = APP.stats.chunksFromP2P + APP.stats.chunksFromServer;
+      const p2pEfficiency = totalChunksDownloaded > 0 ? 
+        (APP.stats.chunksFromP2P / totalChunksDownloaded) * 100 : 0;
+      
+      const p2pEfficiencyEl = document.getElementById('p2pEfficiency');
+      if (p2pEfficiencyEl) {
+        p2pEfficiencyEl.textContent = `${p2pEfficiency.toFixed(1)}%`;
+      }
+        // Log progress safely with streaming status
+      if (received > 0) {
+        const streamingStatus = APP.streamingStarted ? '🎬 STREAMING' : '📥 DOWNLOADING';
+        log(`📊 ${streamingStatus} ${APP.currentMovie}: ${progress.toFixed(1)}% (${formatBytes(totalBytes)})`, 'info');
       }
     }
 
-    // Enhanced progress visualization
-    function updateProgress() {
-      if (!APP.p2p.currentMovie || APP.p2p.totalChunks === 0) return;
-      
-      const movieChunks = APP.p2p.receivedChunks.get(APP.p2p.currentMovie);
-      const received = movieChunks ? movieChunks.size : 0;
-      const progress = (received / APP.p2p.totalChunks) * 100;
-      
-      document.getElementById('progressFill').style.width = `${progress}%`;
-      document.getElementById('progressText').textContent = 
-        `${progress.toFixed(1)}% (${received}/${APP.p2p.totalChunks} chunks)`;
-    }
-
-    // Enhanced chunk visualization with source indicators
+    // Update chunk visualization
     function updateChunkVisualization() {
-      if (!APP.p2p.currentMovie) return;
+      if (!APP.currentMovie || APP.totalChunks === 0) return;
       
       const chunkGrid = document.getElementById('chunkGrid');
       chunkGrid.innerHTML = '';
       
-      const movieChunks = APP.p2p.receivedChunks.get(APP.p2p.currentMovie);
+      const movieChunks = APP.receivedChunks.get(APP.currentMovie);
       
-      for (let i = 0; i < APP.p2p.totalChunks; i++) {
+      for (let i = 0; i < APP.totalChunks; i++) {
         const chunkDiv = document.createElement('div');
         chunkDiv.className = 'chunk-item';
         chunkDiv.textContent = i;
         
-        const chunkKey = `${APP.p2p.currentMovie}_${i}`;
+        const chunkKey = `${APP.currentMovie}_${i}`;
         
         if (movieChunks && movieChunks.has(i)) {
-          const source = APP.p2p.chunkSources.get(chunkKey);
+          const source = APP.chunkSources.get(chunkKey);
           if (source === 'p2p') {
             chunkDiv.classList.add('chunk-p2p');
             chunkDiv.title = `Chunk ${i} - Downloaded via P2P`;
           } else {
-            chunkDiv.classList.add('chunk-complete');
+            chunkDiv.classList.add('chunk-server');
             chunkDiv.title = `Chunk ${i} - Downloaded from server`;
           }
-        } else if (APP.p2p.downloadingChunks.has(chunkKey)) {
+        } else if (APP.downloadingChunks.has(chunkKey)) {
           chunkDiv.classList.add('chunk-downloading');
           chunkDiv.title = `Chunk ${i} - Currently downloading`;
         } else {
@@ -1041,256 +1301,77 @@
       }
     }
 
-    // Enhanced peer list with detailed statistics
+    // Update peer list
     function updatePeerList() {
       const peerList = document.getElementById('peerList');
-      peerList.innerHTML = '';
       
-      if (APP.p2p.dataChannels.size === 0) {
-        peerList.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No peers connected</div>';
+      if (APP.dataChannels.size === 0) {
+        peerList.innerHTML = 'No peers connected';
         return;
       }
       
-      for (const [peerId, channel] of APP.p2p.dataChannels) {
+      peerList.innerHTML = '';
+      
+      for (const [peerId, channel] of APP.dataChannels) {
         const peerDiv = document.createElement('div');
         peerDiv.className = 'peer-item';
         
         const state = channel.readyState;
-        let statusClass = 'status-failed';
-        let statusText = 'Failed';
-        
-        if (state === 'open') {
-          statusClass = 'status-connected';
-          statusText = 'Connected';
-        } else if (state === 'connecting') {
-          statusClass = 'status-connecting';
-          statusText = 'Connecting';
-        }
+        const stateColor = state === 'open' ? '#28a745' : '#dc3545';
         
         peerDiv.innerHTML = `
-          <div class="peer-info">
-            <div class="peer-id">Peer: ${peerId.substring(0, 8)}...</div>
-            <div class="peer-stats">Channel: ${state} | Buffer: ${channel.bufferedAmount || 0} bytes</div>
-          </div>
-          <div class="peer-status ${statusClass}">${statusText}</div>
+          <span>Peer: ${peerId.substring(0, 8)}...</span>
+          <span style="color: ${stateColor}; font-weight: bold;">${state}</span>
         `;
         
         peerList.appendChild(peerDiv);
       }
-    }
-
-    // Enhanced download completion
-    function completeDownload(movie) {
-      log(`🎉 P2P download complete for ${movie}!`, 'success');
-      clearInterval(APP.downloadInterval);
-      clearInterval(APP.statsInterval);
-      APP.downloadActive = false;
+    }    // Update download speed
+    function updateDownloadSpeed() {
+      if (!APP.downloadStartTime) return;
       
-      const movieChunks = APP.p2p.receivedChunks.get(movie);
-      const chunks = [];
+      const elapsed = (Date.now() - APP.downloadStartTime) / 1000;
+      const totalBytes = APP.stats.totalBytes || 0;
+      const speed = elapsed > 0 ? (totalBytes / elapsed / 1024) : 0;
       
-      for (let i = 0; i < APP.p2p.totalChunks; i++) {
-        chunks.push(movieChunks.get(i));
-      }
-      
-      try {
-        // Create blob and video element
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        
-        const videoPlayer = document.getElementById('videoPlayer');
-        videoPlayer.innerHTML = `
-          <h4>🎬 Download Complete!</h4>
-          <div style="margin: 20px 0; padding: 15px; background: #d4edda; border-radius: 10px; color: #155724;">
-            <strong>Statistics:</strong><br>
-            Total Size: ${(APP.stats.totalDownloaded / (1024 * 1024)).toFixed(1)} MB<br>
-            P2P Efficiency: ${((APP.stats.chunksFromP2P / (APP.stats.chunksFromP2P + APP.stats.chunksFromServer)) * 100).toFixed(1)}%<br>
-            Average Speed: ${(APP.stats.avgDownloadSpeed / 1024).toFixed(1)} KB/s
-          </div>
-          <video controls style="max-width: 100%; border-radius: 10px; margin-bottom: 15px;">
-            <source src="${url}" type="video/mp4">
-            Your browser does not support the video tag.
-          </video>
-          <br>
-          <a href="${url}" download="${movie}.mp4" style="
-            display: inline-block;
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            margin: 5px;
-          ">📥 Download File</a>
-          <button onclick="startNewDownload()" style="
-            padding: 12px 24px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            margin: 5px;
-            cursor: pointer;
-          ">🚀 Start New Download</button>
-        `;
-      } catch (err) {
-        log(`❌ Error creating video blob: ${err.message}`, 'error');
-      }
-      
-      updateStatus();
-    }
-
-    // Start new download function
-    function startNewDownload() {
-      document.getElementById('downloadPanel').style.display = 'none';
-      document.getElementById('videoPlayer').innerHTML = '';
-      APP.p2p.currentMovie = null;
-      updateStatus();
-    }
-
-    // Enhanced peers found handler
-    async function handlePeersFound(data) {
-      const { movie, peers, chunkMap } = data;
-      log(`🔍 Found ${peers.length} peers for ${movie}`);
-      
-      APP.p2p.chunkMap = chunkMap;
-      
-      // Connect to each peer with error handling
-      for (const peerId of peers) {
-        if (peerId === APP.localId || APP.p2p.connections.has(peerId)) continue;
-        
-        try {
-          const pc = await createPeerConnection(peerId);
-          const channel = pc.createDataChannel('chunks');
-          APP.p2p.dataChannels.set(peerId, channel);
-          setupDataChannel(channel, peerId);
-          
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          
-          APP.socket.emit('signal', {
-            to: peerId,
-            from: APP.localId,
-            signal: offer
-          });
-          
-          log(`📤 Sent offer to ${peerId.substring(0, 8)}`, 'info');
-        } catch (err) {
-          log(`❌ Failed to connect to ${peerId.substring(0, 8)}: ${err.message}`, 'error');
-        }
-      }
-    }    // Enhanced movie download with analytics
-    async function downloadMovie(movie) {
-      try {
-        if (APP.downloadActive) {
-          log('⚠️ Download already in progress', 'warning');
-          return;
-        }
-        
-        if (!movie || !movie.title) {
-          log('❌ Invalid movie data provided', 'error');
-          console.error('Movie data:', movie);
-          return;
-        }
-        
-        log(`🚀 Starting enhanced P2P download for: ${movie.title}`, 'info');
-        APP.downloadActive = true;
-        APP.p2p.currentMovie = movie.title;
-        APP.p2p.totalChunks = 10;
-        
-        // Reset statistics
-        APP.stats = {
-          totalDownloaded: 0,
-          p2pDownloaded: 0,
-          serverDownloaded: 0,
-          downloadSpeed: 0,
-          avgDownloadSpeed: 0,
-          downloadStartTime: Date.now(),
-          lastUpdateTime: Date.now(),
-          chunksFromP2P: 0,
-          chunksFromServer: 0,
-          networkQuality: 'Starting...',
-          speedHistory: []
-        };
-        
-        // Store movie data
-        APP.currentMovieData = movie;
-        
-        // Initialize missing chunks
-        APP.p2p.missingChunks.clear();
-        APP.p2p.downloadingChunks.clear();
-        APP.p2p.chunkSources.clear();
-        for (let i = 0; i < APP.p2p.totalChunks; i++) {
-          APP.p2p.missingChunks.add(`${movie.title}_${i}`);
-        }
-        
-        // Show download panel
-        document.getElementById('downloadPanel').style.display = 'block';
-        updateChunkVisualization();
-        updateProgress();
-        updateStatus();
-        
-        // Find peers for P2P
-        APP.socket.emit('findPeers', { movie: movie.title });
-        
-        // Start download intervals
-        APP.downloadInterval = setInterval(requestMissingChunks, 2000);
-        APP.statsInterval = setInterval(updateStatus, 1000);
-        
-        // Start immediate request
-        setTimeout(requestMissingChunks, 1000);
-        
-        // WebTorrent fallback timeout
-        setTimeout(() => {
-          if (APP.p2p.missingChunks.size > APP.p2p.totalChunks * 0.7) {
-            log('⚡ P2P is slow, consider WebTorrent fallback', 'warning');
-          }
-        }, 30000);
-        
-      } catch (err) {
-        log(`❌ Download function error: ${err.message}`, 'error');
-        console.error('Download error:', err, 'Movie data:', movie);
-        APP.downloadActive = false;
+      APP.stats.downloadSpeed = speed;
+      const downloadSpeedEl = document.getElementById('downloadSpeed');
+      if (downloadSpeedEl) {
+        downloadSpeedEl.textContent = `${speed.toFixed(1)} KB/s`;
       }
     }
 
-    // Search for movies with enhanced error handling
+    // Enhanced connection status update
+    function updateConnectionStatus() {
+      document.getElementById('connectionStatus').textContent = 
+        APP.socket?.connected ? '🟢 Connected' : '🔴 Disconnected';
+      document.getElementById('peerId').textContent = 
+        APP.localId ? APP.localId.substring(0, 8) + '...' : 'Not Connected';
+      document.getElementById('activePeers').textContent = 
+        Array.from(APP.dataChannels.values()).filter(ch => ch.readyState === 'open').length;
+    }
+
+    // Search movies (unchanged)
     async function searchMovies(query) {
-      if (!query.trim()) {
-        log('❌ Please enter a search query', 'warning');
-        return;
-      }
-      
-      log(`🔍 Searching for: ${query}`, 'info');
-      
       try {
-        const response = await fetch(`http://localhost:8080/search?query=${encodeURIComponent(query)}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
+        const response = await fetch(`${SERVER_URL}/search?query=${encodeURIComponent(query)}`);
         const movies = await response.json();
         displayMovies(movies);
         log(`✅ Found ${movies.length} movies`, 'success');
       } catch (err) {
         log(`❌ Search failed: ${err.message}`, 'error');
-        const container = document.getElementById('movies');
-        container.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem;">
-            ❌ Search failed: ${err.message}
-          </div>
-        `;
       }
     }
 
-    // Enhanced movie display
+    // Display movies (unchanged)
     function displayMovies(movies) {
       const container = document.getElementById('movies');
       container.innerHTML = '';
       
       if (!movies || movies.length === 0) {
         container.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem;">
-            😔 No movies found. Try a different search term.
+          <div style="grid-column: 1/-1; text-align: center; color: rgba(255,255,255,0.8);">
+            😔 No movies found
           </div>
         `;
         return;
@@ -1298,143 +1379,413 @@
       
       movies.forEach(movie => {
         const movieCard = document.createElement('div');
-        movieCard.className = 'movie-card';
-        
-        // Extract magnet link properly
-        let magnetLink = null;
-        if (movie.torrents && movie.torrents.length > 0) {
-          const torrent = movie.torrents.find(t => t.quality === '1080p') || 
-                         movie.torrents.find(t => t.quality === '720p') || 
-                         movie.torrents[0];
-          magnetLink = torrent.url;
-        }
-          const movieData = {
-          title: movie.title,
-          year: movie.year,
-          magnetLink: magnetLink,
-          image: movie.medium_cover_image,
-          summary: (movie.summary || 'No description available.').replace(/'/g, "&#39;").replace(/"/g, "&quot;")
-        };        // Store movie data globally to avoid JSON escaping issues
-        const movieId = `movie_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        window[movieId] = movieData;
-        
-        movieCard.innerHTML = `
+        movieCard.className = 'movie-card';        movieCard.innerHTML = `
           <img src="${movie.medium_cover_image}" alt="${movie.title}" />
           <div class="movie-info">
             <div class="movie-title">${movie.title}</div>
             <div class="movie-year">${movie.year}</div>
             <div class="movie-summary">${movie.summary || 'No description available.'}</div>
-            <button class="download-btn" data-movie-id="${movieId}">
-              🚀 Download via P2P
-            </button>
-            ${magnetLink ? `<button class="download-btn torrent-btn" data-magnet="${magnetLink.replace(/"/g, '&quot;')}" data-title="${movie.title.replace(/"/g, '&quot;')}">
-              🌊 WebTorrent Direct
-            </button>` : ''}
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="download-btn" onclick="startDownload(${JSON.stringify(movie).replace(/"/g, '&quot;')})">
+                🌐 P2P Download
+              </button>
+              <button class="download-btn" onclick="startDownloadWithParallelStreaming('${movie.title.replace(/'/g, "\\'")}', '${(movie.magnet_link || '').replace(/'/g, "\\'")}')" 
+                      style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);" 
+                      ${!movie.magnet_link ? 'disabled title="No magnet link available"' : ''}>
+                🚀 Parallel Stream ${!movie.magnet_link ? '(No Magnet)' : ''}
+              </button>
+            </div>
+            ${!movie.magnet_link ? '<div style="color: #ff6b6b; font-size: 12px; margin-top: 5px;">⚠️ Magnet link not available for this movie</div>' : ''}
           </div>
         `;
-        
-        // Add event listeners safely
-        const downloadBtn = movieCard.querySelector('.download-btn:not(.torrent-btn)');
-        const torrentBtn = movieCard.querySelector('.torrent-btn');
-        
-        if (downloadBtn) {
-          downloadBtn.addEventListener('click', () => {
-            try {
-              downloadMovie(window[movieId]);
-            } catch (err) {
-              log(`❌ Download error: ${err.message}`, 'error');
-            }
-          });
-        }
-        
-        if (torrentBtn) {
-          torrentBtn.addEventListener('click', () => {
-            try {
-              const magnet = torrentBtn.getAttribute('data-magnet');
-              const title = torrentBtn.getAttribute('data-title');
-              startWebTorrentDownload(magnet, title);
-            } catch (err) {
-              log(`❌ WebTorrent error: ${err.message}`, 'error');
-            }
-          });
-        }
         
         container.appendChild(movieCard);
       });
     }
 
-    // WebTorrent direct download
-    function startWebTorrentDownload(magnetLink, title) {
-      if (!APP.webTorrentClient) {
-        log('❌ WebTorrent not available', 'error');
+    // Enhanced logging system
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry log-${type}`;
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      
+      const logsContainer = document.getElementById('logs');
+      logsContainer.appendChild(logEntry);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+      
+      // Limit log entries
+      while (logsContainer.children.length > 200) {
+        logsContainer.removeChild(logsContainer.firstChild);
+      }
+      
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }    // Utility function to format bytes
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0 || isNaN(bytes)) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // PARALLEL STREAMING FUNCTIONS
+    
+    // Handle parallel stream started
+    function handleParallelStreamStarted(data) {
+      const { movie, engineId, stats } = data;
+      log(`🚀 Parallel streaming started for ${movie}`, 'success');
+      
+      APP.parallelStreaming.enabled = true;
+      APP.parallelStreaming.engineActive = true;
+      APP.parallelStreaming.currentStream = movie;
+      
+      document.getElementById('parallelStreamingPanel').style.display = 'block';
+      updateParallelStreamingUI();
+    }
+
+    // Handle parallel stream error
+    function handleParallelStreamError(data) {
+      const { movie, error } = data;
+      log(`❌ Parallel streaming error for ${movie}: ${error}`, 'error');
+      APP.parallelStreaming.engineActive = false;
+      updateParallelStreamingUI();
+    }
+
+    // Handle streaming progress updates
+    function handleStreamingProgressUpdate(data) {
+      const { movie, stats } = data;
+      if (movie === APP.parallelStreaming.currentStream) {
+        APP.parallelStreaming.stats = { ...APP.parallelStreaming.stats, ...stats };
+        updateParallelStreamingUI();
+        
+        // Also update regular progress
+        updateProgress();
+        updateChunkVisualization();
+      }
+    }
+
+    // Handle stream chunk data
+    function handleStreamChunk(data) {
+      const { movie, chunk, timestamp } = data;
+      // Process incoming chunk data for real-time streaming
+      log(`📦 Received stream chunk for ${movie} (${formatBytes(chunk.byteLength)})`, 'info');
+    }
+
+    // Handle stream error
+    function handleStreamError(data) {
+      const { movie, error } = data;
+      log(`❌ Stream error for ${movie}: ${error}`, 'error');
+    }
+
+    // Handle streaming statistics
+    function handleStreamingStats(data) {
+      const { movie, stats } = data;
+      if (movie === APP.parallelStreaming.currentStream) {
+        APP.parallelStreaming.stats = { ...APP.parallelStreaming.stats, ...stats };
+        updateParallelStreamingUI();
+      }
+    }
+
+    // Start parallel streaming for a movie
+    function startParallelStreaming(movie, magnetLink) {
+      if (!APP.socket) {
+        log('❌ Socket not connected', 'error');
+        return;
+      }
+
+      log(`🚀 Starting parallel streaming for ${movie}`, 'info');
+      APP.socket.emit('startParallelStream', { movie, magnetLink });
+    }    // Update parallel streaming UI
+    function updateParallelStreamingUI() {
+      const stats = APP.parallelStreaming.stats || {};
+      
+      // Update status indicators
+      const streamingStatus = document.getElementById('streamingStatus');
+      if (streamingStatus) {
+        streamingStatus.textContent = APP.parallelStreaming.engineActive ? 'Active' : 'Idle';
+      }
+      
+      const chunksProcessed = document.getElementById('chunksProcessed');
+      if (chunksProcessed) {
+        chunksProcessed.textContent = `${stats.chunksProcessed || 0}/${stats.totalChunks || APP.totalChunks}`;
+      }
+      
+      const bufferHealth = document.getElementById('bufferHealth');
+      if (bufferHealth) {
+        bufferHealth.textContent = `${(stats.bufferHealth || 0).toFixed(1)}%`;
+      }
+      
+      const processingSpeed = document.getElementById('processingSpeed');
+      if (processingSpeed) {
+        processingSpeed.textContent = `${(stats.processingSpeed || 0).toFixed(1)} chunks/s`;
+      }
+      
+      const cpuUtilization = document.getElementById('cpuUtilization');
+      if (cpuUtilization) {
+        cpuUtilization.textContent = `${(stats.cpuUtilization || 0).toFixed(1)}%`;
+      }
+      
+      const activeWorkers = document.getElementById('activeWorkers');
+      if (activeWorkers) {
+        activeWorkers.textContent = `${stats.activeWorkers || 0}/${stats.maxWorkers || 0}`;
+      }
+      
+      // Update performance metrics
+      const bandwidthUsage = document.getElementById('bandwidthUsage');
+      if (bandwidthUsage) {
+        bandwidthUsage.textContent = `${((stats.bandwidthUsage || 0) / 1000000).toFixed(1)} Mbps`;
+      }
+      
+      const cacheHitRate = document.getElementById('cacheHitRate');
+      if (cacheHitRate) {
+        cacheHitRate.textContent = `${(stats.cacheHitRate || 0).toFixed(1)}%`;
+      }
+      
+      const queueLength = document.getElementById('queueLength');
+      if (queueLength) {
+        queueLength.textContent = stats.queueLength || 0;
+      }
+      
+      const avgResponseTime = document.getElementById('avgResponseTime');
+      if (avgResponseTime) {
+        avgResponseTime.textContent = `${(stats.avgResponseTime || 0).toFixed(0)}ms`;
+      }
+    }    // Enhanced download function with parallel streaming option
+    async function startDownloadWithParallelStreaming(movie, magnetLink) {
+      // ✅ 1. VALIDATE MAGNET LINK FIRST
+      if (!magnetLink || magnetLink.trim() === '') {
+        log(`❌ Cannot start parallel streaming: Magnet link is missing for ${movie}`, 'error');
         return;
       }
       
-      log(`🌊 Starting WebTorrent download: ${title}`, 'info');
+      log(`🚀 Starting parallel streaming for ${movie}`, 'info');
+      log(`🧲 Using magnet link: ${magnetLink.substring(0, 50)}...`, 'info');
       
-      APP.webTorrentClient.add(magnetLink, (torrent) => {
-        log(`✅ WebTorrent: Added ${torrent.name}`, 'success');
-        
-        torrent.on('download', () => {
-          const progress = (torrent.progress * 100).toFixed(1);
-          log(`🌊 WebTorrent: ${progress}% complete`, 'info');
-        });
-        
-        torrent.on('done', () => {
-          log('🎉 WebTorrent download complete!', 'success');
-          
-          torrent.files.forEach(file => {
-            if (file.name.match(/\.(mp4|mkv|avi|webm)$/i)) {
-              file.appendTo('#videoPlayer', (err, elem) => {
-                if (!err) {
-                  log(`🎬 Playing ${file.name} via WebTorrent`, 'success');
-                  document.getElementById('downloadPanel').style.display = 'block';
-                }
-              });
-            }
-          });
-        });
-        
-        torrent.on('error', (err) => {
-          log(`❌ WebTorrent error: ${err.message}`, 'error');
-        });
-      });
-    }
-
-    // Enhanced cleanup function
-    function cleanup() {
-      APP.localId = null;
-      APP.downloadActive = false;
-      clearInterval(APP.downloadInterval);
-      clearInterval(APP.statsInterval);
+      // Initialize movie and download state
+      APP.currentMovie = movie;
+      APP.downloadActive = true;
+      APP.downloadStartTime = Date.now();
       
-      for (const pc of APP.p2p.connections.values()) {
-        pc.close();
+      // Clear previous state
+      APP.receivedChunks.set(movie, new Map());
+      APP.missingChunks.clear();
+      APP.downloadingChunks.clear();
+      APP.chunkSources.clear();
+      
+      // Reset streaming state
+      APP.streamingStarted = false;
+      APP.lastStreamedChunks = 0;
+      if (APP.streamingUpdateInterval) {
+        clearInterval(APP.streamingUpdateInterval);
+        APP.streamingUpdateInterval = null;
       }
       
-      APP.p2p.connections.clear();
-      APP.p2p.dataChannels.clear();
-      APP.p2p.missingChunks.clear();
-      APP.p2p.downloadingChunks.clear();
-      APP.p2p.assemblingChunks.clear();
-      APP.p2p.chunkSources.clear();
-      APP.p2p.currentMovie = null;
-      APP.p2p.totalChunks = 0;
+      // ✅ 2. START WITH SAFE DEFAULT BUT GET REAL SIZE FROM SERVER
+      APP.totalChunks = 100; // Safe default to prevent NaN errors
       
-      // Reset stats
-      APP.stats = {
-        totalDownloaded: 0,
-        p2pDownloaded: 0,
-        serverDownloaded: 0,
-        downloadSpeed: 0,
-        avgDownloadSpeed: 0,
-        downloadStartTime: null,
-        lastUpdateTime: null,
-        chunksFromP2P: 0,
-        chunksFromServer: 0,
-        networkQuality: 'Unknown',
-        speedHistory: []
+      try {
+        // ✅ 3. STORE MAGNET LINK ON SERVER FIRST
+        log(`💾 Storing magnet link for ${movie}...`, 'info');
+        await fetch(`${SERVER_URL}/parallel/store_magnet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            movie: movie,
+            magnetLink: magnetLink
+          })
+        });
+        
+        // ✅ 4. START PARALLEL STREAMING ENGINE
+        log(`🚀 Starting parallel streaming engine...`, 'info');
+        const streamResponse = await fetch(`${SERVER_URL}/parallel/start_parallel_stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            movie: movie,
+            peerId: APP.localId || 'unknown'
+          })
+        });
+        
+        if (streamResponse.ok) {
+          const streamData = await streamResponse.json();
+          log(`✅ Parallel streaming engine started: ${streamData.message}`, 'success');
+        }
+        
+        // ✅ 5. GET REAL MOVIE INFO FROM TORRENT
+        log(`📊 Getting real movie info from torrent...`, 'info');
+        const infoResponse = await fetch(`${SERVER_URL}/parallel/get_movie_info?movie=${encodeURIComponent(movie)}`);
+        
+        if (infoResponse.ok) {
+          const movieInfo = await infoResponse.json();
+          
+          // ✅ 6. USE REAL CHUNK COUNT FROM TORRENT
+          if (movieInfo.totalChunks && movieInfo.totalChunks > 0) {
+            APP.totalChunks = movieInfo.totalChunks;
+            log(`📊 Real movie info: ${APP.totalChunks} chunks (${formatBytes(movieInfo.fileSize)})`, 'success');
+          } else {
+            log(`⚠️ Using default chunk count (torrent not ready yet)`, 'warning');
+          }
+        } else {
+          log(`⚠️ Failed to get movie info, using default chunk count`, 'warning');
+        }
+        
+      } catch (error) {
+        log(`❌ Error setting up parallel streaming: ${error.message}`, 'error');
+        log(`⚠️ Continuing with default settings...`, 'warning');
+      }
+      
+      // Populate missing chunks with REAL count
+      for (let i = 0; i < APP.totalChunks; i++) {
+        APP.missingChunks.add(`${movie}_${i}`);
+      }
+      
+      // Show UI
+      document.getElementById('downloadPanel').style.display = 'block';
+      document.getElementById('parallelStreamingPanel').style.display = 'block';
+      
+      // Update UI
+      updateProgress();
+      updateChunkVisualization();
+      
+      log(`🎬 Parallel streaming ready: ${movie} (${APP.totalChunks} chunks)`, 'success');
+      
+      // Find peers and enable parallel streaming mode
+      if (APP.socket) {
+        APP.socket.emit('findPeers', { movie });
+      }
+      
+      APP.parallelStreaming.enabled = true;
+      APP.parallelStreaming.engineActive = true;
+      APP.parallelStreaming.currentStream = movie;
+      
+      // Start downloading chunks using parallel tracker
+      setTimeout(() => {
+        startParallelChunkDownload();
+      }, 3000); // Give server time to process torrent
+    }
+
+    // **NEW**: Start downloading chunks using parallel tracker
+    function startParallelChunkDownload() {
+      if (!APP.downloadActive || APP.missingChunks.size === 0) return;
+      
+      const downloadChunks = async () => {
+        const missingArray = Array.from(APP.missingChunks);
+        const batchSize = Math.min(APP.settings.maxConcurrentChunks, missingArray.length);
+        
+        for (let i = 0; i < batchSize; i++) {
+          const chunkKey = missingArray[i];
+          if (APP.downloadingChunks.has(chunkKey)) continue;
+          
+          const chunkIndex = parseInt(chunkKey.split('_')[1]);
+          downloadChunkFromParallelTracker(chunkIndex, chunkKey);
+        }
+        
+        if (APP.missingChunks.size > 0 && APP.downloadActive) {
+          setTimeout(downloadChunks, APP.settings.chunkRequestInterval);
+        }
       };
+      
+      downloadChunks();
+    }    // **ENHANCED**: Download chunk using parallel tracker with better error handling
+    async function downloadChunkFromParallelTracker(chunkIndex, chunkKey) {
+      APP.downloadingChunks.add(chunkKey);
+      
+      try {
+        log(`⚡ Downloading chunk ${chunkIndex} via parallel tracker for ${APP.currentMovie}`, 'info');
+        
+        const response = await fetch(
+          `${SERVER_URL}/parallel/download_chunk_parallel?movie=${encodeURIComponent(APP.currentMovie)}&chunkIndex=${chunkIndex}&peerId=${APP.localId}`,
+          { 
+            signal: AbortSignal.timeout(45000), // Increased timeout
+            headers: { 'Cache-Control': 'no-cache' }
+          }
+        );
+        
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const chunkData = new Uint8Array(arrayBuffer);
+          const source = response.headers.get('X-Chunk-Source') || 'parallel';
+          
+          // Validate chunk data
+          if (chunkData.length === 0) {
+            throw new Error('Received empty chunk data');
+          }
+          
+          receiveChunk(chunkIndex, chunkData, source);
+          log(`✅ Downloaded chunk ${chunkIndex} via parallel tracker (${formatBytes(chunkData.length)}) - Source: ${source}`, 'success');
+        } else {
+          // Parse error response
+          let errorDetails = 'Unknown error';
+          try {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || `HTTP ${response.status}`;
+            
+            // Check if it's a "no torrent" error
+            if (errorDetails.includes('No torrent available') || errorDetails.includes('no magnet link')) {
+              log(`❌ Parallel tracker has no torrent for ${APP.currentMovie} - chunk ${chunkIndex}`, 'error');
+              log(`💡 Tip: Make sure the magnet link was stored properly`, 'info');
+            }
+          } catch (parseError) {
+            errorDetails = `HTTP ${response.status}: ${response.statusText}`;
+          }
+          
+          throw new Error(errorDetails);
+        }
+      } catch (err) {
+        log(`❌ Parallel download failed for chunk ${chunkIndex}: ${err.message}`, 'error');
+        APP.downloadingChunks.delete(chunkKey);
+        
+        // Fallback to regular server with delay
+        setTimeout(() => {
+          if (APP.downloadingChunks.has(chunkKey)) return; // Already downloading
+          if (!APP.downloadActive) return; // Download stopped
+          
+          log(`🔄 Falling back to regular tracker for chunk ${chunkIndex}`, 'info');
+          downloadChunkFromServer(chunkIndex, chunkKey);
+        }, 3000);
+      }
+    }
+
+    // **NEW**: Handle parallel stream events and update UI
+    function handleParallelStreamStarted(data) {
+      const { movie, streamId, stats } = data;
+      log(`🚀 Parallel streaming engine started for ${movie}`, 'success');
+      
+      APP.parallelStreaming.engineActive = true;
+      APP.parallelStreaming.currentStream = movie;
+      
+      if (stats) {
+        APP.parallelStreaming.stats = { ...APP.parallelStreaming.stats, ...stats };
+        updateParallelStreamingUI();
+      }
+    }
+
+    function handleParallelStreamError(data) {
+      const { movie, error } = data;
+      log(`❌ Parallel streaming error for ${movie}: ${error}`, 'error');
+      APP.parallelStreaming.engineActive = false;
+      updateParallelStreamingUI();
+    }
+
+    function handleStreamingProgressUpdate(data) {
+      const { movie, stats } = data;
+      if (movie === APP.parallelStreaming.currentStream) {
+        APP.parallelStreaming.stats = { ...APP.parallelStreaming.stats, ...stats };
+        updateParallelStreamingUI();
+        
+        // Also update regular progress
+        updateProgress();
+        updateChunkVisualization();
+      }
+    }
+
+    function handleStreamingStats(data) {
+      const { stats } = data;
+      if (stats) {
+        APP.parallelStreaming.stats = { ...APP.parallelStreaming.stats, ...stats };
+        updateParallelStreamingUI();
+      }
     }
 
     // Event listeners
@@ -1454,27 +1805,50 @@
       }
     });
 
-    // Initialize the application
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeSocket();
-      updateStatus();
-      log('🎬 Advanced P2P Movie Streaming Platform initialized', 'success');
-      log('💡 Tip: Open multiple browser tabs to test P2P functionality!', 'info');
+    // Parallel streaming button event listeners
+    document.getElementById('enableParallelBtn').addEventListener('click', () => {
+      if (!APP.parallelStreaming.enabled) {
+        APP.parallelStreaming.enabled = true;
+        document.getElementById('parallelStreamingPanel').style.display = 'block';
+        log('🚀 Parallel streaming mode enabled', 'success');
+      } else {
+        log('⚠️ Parallel streaming already enabled', 'warning');
+      }
     });
 
-    // Initialize immediately if DOM is already loaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        initializeSocket();
-        updateStatus();
-      });
-    } else {
-      initializeSocket();
-      updateStatus();
-    }
+    document.getElementById('viewStatsBtn').addEventListener('click', () => {
+      if (APP.parallelStreaming.currentStream) {
+        APP.socket.emit('getStreamingStats', { movie: APP.parallelStreaming.currentStream });
+      } else {
+        log('⚠️ No active streaming session', 'warning');
+      }
+    });
 
-    log('🚀 Advanced P2P Movie Streaming Platform initialized', 'success');
-    log('💡 Open multiple browser tabs to test real P2P functionality!', 'info');
+    document.getElementById('optimizeBtn').addEventListener('click', () => {
+      // Auto-optimize parallel streaming settings
+      const cpuCores = navigator.hardwareConcurrency || 4;
+      APP.settings.maxConcurrentChunks = Math.min(cpuCores * 2, 10);
+      log(`⚡ Auto-optimized for ${cpuCores} CPU cores - Max concurrent chunks: ${APP.settings.maxConcurrentChunks}`, 'success');
+    });
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSocket();
+      updateConnectionStatus();
+      log('🚀 Optimized P2P Movie Platform initialized', 'success');
+      log('💡 Open multiple browser tabs to test real P2P functionality!', 'info');
+      
+      // Periodic status updates
+      setInterval(() => {
+        if (APP.downloadActive) {
+          updateDownloadSpeed();
+          updateConnectionStatus();
+        }
+      }, 1000);
+    });    // Make functions available globally
+    window.startDownload = startDownload;
+    window.startNewDownload = startNewDownload;
+    window.startDownloadWithParallelStreaming = startDownloadWithParallelStreaming;
   </script>
 </body>
 </html>

@@ -17,13 +17,17 @@
   "description": "",
   "dependencies": {
     "axios": "^1.10.0",
+    "bencode": "^4.0.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "socket.io": "^4.8.1",
-    "multer": "^1.4.5-lts.1",
     "crypto": "^1.0.1",
+    "express": "^5.1.0",
     "fs": "^0.0.1-security",
+    "magnet-uri": "^7.0.7",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "parse-torrent": "^11.0.18",
     "path": "^0.12.7",
-    "node-fetch": "^3.3.2"
+    "socket.io": "^4.8.1",
+    "webtorrent": "^2.6.8"
   }
 }

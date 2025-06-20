@@ -2,9 +2,44 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const axios = require("axios"); // For making HTTP requests
-const trackerRoutes = require("./tracker"); // ADD THIS LINE
-const { PeerInfo } = require("./peer"); // Import PeerInfo class
+const trackerRoutes = require("./tracker"); // Original tracker
+const parallelTrackerRoutes = require("./parallelTracker"); // Enhanced parallel tracker
+
+// Define PeerInfo class here since peer.js might not exist
+class PeerInfo {
+    constructor(peerId, socketId) {
+        this.peerId = peerId;
+        this.socketId = socketId;
+        this.chunks = new Map(); // movie -> Set of chunkIndexes
+        this.lastSeen = Date.now();
+    }
+
+    addChunk(movie, chunkIndex) {
+        if (!this.chunks.has(movie)) {
+            this.chunks.set(movie, new Set());
+        }
+        this.chunks.get(movie).add(chunkIndex);
+        this.updateLastSeen();
+    }
+
+    removeChunk(movie, chunkIndex) {
+        if (this.chunks.has(movie)) {
+            this.chunks.get(movie).delete(chunkIndex);
+            if (this.chunks.get(movie).size === 0) {
+                this.chunks.delete(movie);
+            }
+        }
+        this.updateLastSeen();
+    }
+
+    updateLastSeen() {
+        this.lastSeen = Date.now();
+    }
+
+    isStale(threshold) {
+        return (Date.now() - this.lastSeen) > threshold;
+    }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +58,8 @@ app.use(cors());
 app.use(express.json());
 
 // USE THE TRACKER ROUTES HERE
-app.use("/", trackerRoutes); // ADD THIS LINE: This mounts all routes from tracker.js at the root path
+app.use("/", trackerRoutes); // Original tracker routes
+app.use("/parallel", parallelTrackerRoutes); // Enhanced parallel streaming routes
 
 // Movie Search API (replicating Python's /search endpoint)
 // ... (existing code)
@@ -31,45 +67,62 @@ app.use("/", trackerRoutes); // ADD THIS LINE: This mounts all routes from track
 app.get("/search", async (req, res) => {
     const query = req.query.query;
     try {
-        const response = await axios.get("https://yts.mx/api/v2/list_movies.json", {
-            params: { query_term: query },
-        });
+        const response = await fetch(`https://yts.mx/api/v2/list_movies.json?query_term=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            console.error("YTS API response status:", response.status);
+            return res.status(response.status).json({
+                error: "Failed to fetch movies",
+                details: `YTS API returned status ${response.status}`,
+                statusCode: response.status,
+            });
+        }
 
-        const movies = response.data.data?.movies || [];
-
-        // --- NEW LOGIC: Extract magnet links ---
+        const data = await response.json();
+        const movies = data.data?.movies || [];
+        
+        // Create proper magnet links from YTS torrent data
         const moviesWithMagnetLinks = movies.map(movie => {
             let magnetLink = null;
             // Find a suitable torrent (e.g., 1080p, then 720p)
             if (movie.torrents && movie.torrents.length > 0) {
                 const quality1080p = movie.torrents.find(t => t.quality === '1080p');
                 const quality720p = movie.torrents.find(t => t.quality === '720p');
+                let selectedTorrent = null;
+                
                 if (quality1080p) { 
-                    magnetLink = quality1080p.url;
-                    console.log(magnetLink);
+                    selectedTorrent = quality1080p;
                 } else if (quality720p) {
-                    magnetLink = quality720p.url;
-                    console.log(magnetLink);
+                    selectedTorrent = quality720p;
                 } else {
-                    magnetLink = movie.torrents[0].url; // Fallback to first available
-                    console.log(magnetLink);
+                    selectedTorrent = movie.torrents[0]; // Fallback to first available
                 }
-            }
+                
+                // Create proper magnet link from torrent hash
+                if (selectedTorrent && selectedTorrent.hash) {
+                    const movieName = encodeURIComponent(movie.title.replace(/[^\w\s]/gi, ''));
+                    magnetLink = `magnet:?xt=urn:btih:${selectedTorrent.hash}&dn=${movieName}&tr=udp://open.demonii.com:1337/announce&tr=udp://tracker.openbittorrent.com:80&tr=udp://tracker.coppersurfer.tk:6969&tr=udp://glotorrents.pw:6969/announce&tr=udp://tracker.opentrackr.org:1337/announce&tr=udp://torrent.gresille.org:80/announce&tr=udp://p4p.arenabg.com:1337&tr=udp://tracker.leechers-paradise.org:6969`;
+                    console.log(`Created magnet link for ${movie.title}:`, magnetLink.substring(0, 100) + '...');
+                }
+            }            
+            
             return {
                 title: movie.title,
                 year: movie.year,
                 medium_cover_image: movie.medium_cover_image,
                 summary: movie.summary,
-                magnet_link: magnetLink // Add the magnet link here
+                magnet_link: magnetLink,
+                torrents: movie.torrents
             };
         });
 
-        res.json(moviesWithMagnetLinks); // Send the movies with magnet links
+        res.json(moviesWithMagnetLinks);
     } catch (error) {
-        console.error("Error fetching movies from YTS API:", error);
+        console.error("Error fetching movies from YTS API:", error.message);
         res.status(500).json({
             error: "Failed to fetch movies",
             details: error.message,
+            statusCode: 500,
         });
     }
 });
@@ -90,23 +143,30 @@ io.on("connection", (socket) => {
   // Create and store peer information
   const peerInfo = new PeerInfo(socket.id, socket.id);
   activePeers.set(socket.id, peerInfo);
-
   // Handle chunk registration (delegate to tracker)
-  socket.on("registerChunk", ({ movie, chunkIndex }) => {
+  socket.on("registerChunk", async ({ movie, chunkIndex }) => {
     console.log(`Peer ${socket.id} registering chunk ${chunkIndex} for movie: ${movie}`);
-    
+
     // Update peer info
     peerInfo.addChunk(movie, chunkIndex);
     peerInfo.updateLastSeen();
-    
-    // Send registration to tracker
-    axios.post('http://localhost:8080/register_chunk', { 
-      movie, 
-      chunkIndex, 
-      peerId: socket.id 
-    }).catch(err => {
-      console.error('Error registering chunk with tracker:', err.message);
-    });
+
+    // Send registration to tracker (HTTP POST to tracker.js route)
+    try {
+      const response = await fetch("http://localhost:8080/register_chunk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ movie, chunkIndex, peerId: socket.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log(`Registered chunk ${chunkIndex} for movie ${movie}`);
+    } catch (err) {
+      console.error("Error registering chunk with tracker:", err.message);
+    }
   });
 
   // Handle signaling messages
@@ -121,71 +181,213 @@ io.on("connection", (socket) => {
 
     // Forward the signal to the target peer
     io.to(to).emit("signal", { from, signal });
-  });
-  // Handle peer discovery requests
-  socket.on("findPeers", ({ movie }) => {
+  });  // Handle peer discovery requests
+  socket.on("findPeers", async ({ movie }) => {
     console.log(`Finding peers for movie: ${movie}`);
-    // Get chunk map from tracker and send available peers
-    const axios = require('axios');
-    axios.get(`http://localhost:8080/get_chunk_map?movie=${encodeURIComponent(movie)}`)
-      .then(response => {
-        const chunkMap = response.data;
-        const availablePeers = new Set();
-        
-        for (const chunkIndex in chunkMap) {
-          chunkMap[chunkIndex].forEach(peerId => {
-            if (peerId !== socket.id) {  
-              availablePeers.add(peerId);
-            }
-          });
-        }
-        
-        console.log(`Found ${availablePeers.size} peers for movie ${movie}`);
-        socket.emit("peersFound", { 
-          movie, 
-          peers: Array.from(availablePeers),
-          chunkMap 
+    // Get chunk map from tracker (HTTP GET to tracker.js route)
+    try {
+      const response = await fetch(`http://localhost:8080/get_chunk_map?movie=${encodeURIComponent(movie)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const chunkMap = await response.json();
+      const availablePeers = new Set();
+      
+      for (const chunkIndex in chunkMap) {
+        chunkMap[chunkIndex].forEach(peerId => {
+          if (peerId !== socket.id) {  // Exclude self
+            availablePeers.add(peerId);
+          }
         });
-      })
-      .catch(err => {
-        console.error('Error getting chunk map:', err.message);
-        socket.emit("peersFound", { movie, peers: [], chunkMap: {} });
+      }
+      
+      console.log(`Found ${availablePeers.size} potential peers for movie ${movie}`);
+      socket.emit("peersFound", { 
+        movie, 
+        peers: Array.from(availablePeers),
+        chunkMap // Send the full chunk map so client knows which peer has what
       });
+    } catch (err) {
+      console.error('Error getting chunk map for findPeers:', err.message);
+      socket.emit("peersFound", { movie, peers: [], chunkMap: {} });
+    }
   });  // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log("A peer disconnected:", socket.id);
+  socket.on("disconnect", async (reason) => {
+    console.log(`A peer disconnected: ${socket.id}, reason: ${reason}`);
+
+    activePeers.delete(socket.id); // Always remove from activePeers map on disconnect
+
+    try {
+      const response = await fetch("http://localhost:8080/cleanup_peer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ peerId: socket.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log(`Cleaned up peer ${socket.id} from tracker.`);
+    } catch (err) {
+      console.error("Error cleaning up peer from tracker:", err.message);
+    }
+  });
+
+  // PARALLEL STREAMING EVENTS
+  
+  // Handle parallel streaming start request
+  socket.on("startParallelStream", async ({ movie, magnetLink }) => {
+    console.log(`🚀 Starting parallel stream for movie: ${movie}`);
     
-    // Remove peer from active peers
-    activePeers.delete(socket.id);
+    try {
+      const response = await fetch("http://localhost:8080/parallel/start_parallel_stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          movie, 
+          magnetLink, 
+          peerId: socket.id,
+          socketId: socket.id 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      socket.emit("parallelStreamStarted", { movie, ...result });
+      
+      // Start sending real-time progress updates
+      startStreamingProgressUpdates(socket, movie);
+      
+    } catch (err) {
+      console.error("Error starting parallel stream:", err.message);
+      socket.emit("parallelStreamError", { movie, error: err.message });
+    }
+  });
+
+  // Handle stream movie request with parallel processing  
+  socket.on("streamMovie", async ({ movie, startChunk = 0 }) => {
+    console.log(`🎬 Streaming movie ${movie} starting from chunk ${startChunk}`);
     
-    // Clean up peer from tracker registry
-    axios.post('http://localhost:8080/cleanup_peer', { 
-      peerId: socket.id 
-    }).catch(err => {
-      console.error('Error cleaning up peer from tracker:', err.message);
-    });
+    try {
+      const response = await fetch(`http://localhost:8080/parallel/stream_movie?movie=${encodeURIComponent(movie)}&startChunk=${startChunk}&peerId=${socket.id}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Set up streaming response
+      const reader = response.body.getReader();
+      const stream = new ReadableStream({
+        start(controller) {
+          function pump() {
+            return reader.read().then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+              // Forward chunk data to client
+              socket.emit("streamChunk", { 
+                movie, 
+                chunk: value,
+                timestamp: Date.now()
+              });
+              controller.enqueue(value);
+              return pump();
+            });
+          }
+          return pump();
+        }
+      });
+
+    } catch (err) {
+      console.error("Error streaming movie:", err.message);
+      socket.emit("streamError", { movie, error: err.message });
+    }
+  });
+
+  // Handle request for streaming statistics
+  socket.on("getStreamingStats", async ({ movie }) => {
+    try {
+      const response = await fetch(`http://localhost:8080/parallel/streaming_stats?movie=${encodeURIComponent(movie)}`);
+      
+      if (response.ok) {
+        const stats = await response.json();
+        socket.emit("streamingStats", { movie, stats });
+      }
+    } catch (err) {
+      console.error("Error getting streaming stats:", err.message);
+    }
   });
 });
 
+// Streaming progress update intervals
+const streamingIntervals = new Map(); // socketId -> intervalId
+
+/**
+ * Start sending real-time streaming progress updates
+ */
+function startStreamingProgressUpdates(socket, movie) {
+  // Clear any existing interval for this socket
+  if (streamingIntervals.has(socket.id)) {
+    clearInterval(streamingIntervals.get(socket.id));
+  }
+
+  const intervalId = setInterval(async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/parallel/streaming_stats?movie=${encodeURIComponent(movie)}`);
+      
+      if (response.ok) {
+        const stats = await response.json();
+        socket.emit("streamingProgressUpdate", { movie, stats });
+      }
+    } catch (err) {
+      console.error("Error sending streaming progress:", err.message);
+    }
+  }, 1000); // Update every second
+
+  streamingIntervals.set(socket.id, intervalId);
+
+  // Clean up interval when socket disconnects
+  socket.on('disconnect', () => {
+    if (streamingIntervals.has(socket.id)) {
+      clearInterval(streamingIntervals.get(socket.id));
+      streamingIntervals.delete(socket.id);
+    }
+  });
+}
+
 // Periodic cleanup of stale peers
 setInterval(() => {
-  const currentTime = Date.now();
   const staleThreshold = 5 * 60 * 1000; // 5 minutes
-  
+  const peersToRemove = [];
+
   for (const [peerId, peerInfo] of activePeers) {
     if (peerInfo.isStale(staleThreshold)) {
-      console.log(`Removing stale peer: ${peerId}`);
-      activePeers.delete(peerId);
-      
-      // Clean up from tracker
-      axios.post('http://localhost:8080/cleanup_peer', { 
-        peerId 
-      }).catch(err => {
-        console.error('Error cleaning up stale peer from tracker:', err.message);
-      });
+      console.log(`Marking stale peer for removal: ${peerId}`);
+      peersToRemove.push(peerId);
     }
   }
-}, 60 * 1000); 
+
+  peersToRemove.forEach(peerId => {
+      activePeers.delete(peerId);
+      console.log(`Removed stale peer ${peerId} from activePeers map.`);
+      // Also clean up from tracker if needed (though already done on disconnect normally)
+      fetch('http://localhost:8080/cleanup_peer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ peerId })
+      }).catch(err => {
+          console.error('Error cleaning up stale peer from tracker during interval:', err.message);
+      });
+  });
+
+}, 60 * 1000); // Run every 1 minute
 
 // Start the server
 const PORT = 8080;
